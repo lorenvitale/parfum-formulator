@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Parfum Formulator</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="hero">
+        <div>
+          <h1>Parfum Formulator</h1>
+          <p>
+            Disegna, valuta e perfeziona le tue formule in modo intuitivo, sempre con
+            una visione chiara della piramide olfattiva.
+          </p>
+        </div>
+        <button id="newFormulaBtn" class="ghost-btn" type="button">Nuova formula</button>
+      </header>
+
+      <section class="card" id="batchSection">
+        <h2>Dosaggio Batch</h2>
+        <div class="grid">
+          <label class="field">
+            <span>Nome Formula</span>
+            <input id="formulaName" type="text" placeholder="Es. Aurora" />
+          </label>
+          <label class="field">
+            <span>Tipologia</span>
+            <select id="formulaType">
+              <option value="EDT">Eau de Toilette</option>
+              <option value="EDP" selected>Eau de Parfum</option>
+              <option value="Parfum">Extrait / Parfum</option>
+              <option value="Cologne">Cologne</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Lotto (g)</span>
+            <input id="batchWeight" type="number" min="0" step="0.01" value="100" />
+          </label>
+          <label class="field">
+            <span>Densità media (g/ml)</span>
+            <input id="density" type="number" min="0.1" step="0.01" value="0.94" />
+          </label>
+          <label class="field">
+            <span>Lotto (ml)</span>
+            <output id="batchVolume">106.38</output>
+          </label>
+          <label class="field">
+            <span>Lotto (gocce)</span>
+            <output id="batchDrops">2127</output>
+          </label>
+        </div>
+        <p class="microcopy">
+          Conversioni basate su 1 ml = densità inserita e 20 gocce per millilitro. Regola
+          a piacere per la tua filiera produttiva.
+        </p>
+      </section>
+
+      <section class="card" id="materialsSection">
+        <div class="section-header">
+          <h2>Materie Prime</h2>
+          <div class="section-actions">
+            <button id="addMaterialBtn" type="button">Aggiungi nota</button>
+            <button id="clearMaterialsBtn" class="ghost-btn" type="button">Svuota</button>
+          </div>
+        </div>
+        <div class="materials-table" id="materialsTable"></div>
+        <p class="microcopy">
+          Inserisci le note aromatiche in grammi. Le conversioni in ml, gocce e percentuali sono
+          calcolate automaticamente rispetto al lotto.
+        </p>
+      </section>
+
+      <section class="card" id="insightsSection">
+        <h2>Analisi automatica</h2>
+        <div class="insights-grid">
+          <div>
+            <h3>Piramide olfattiva</h3>
+            <ul id="pyramidList" class="pyramid"></ul>
+          </div>
+          <div>
+            <h3>Famiglia predominante</h3>
+            <p id="familyBadge" class="badge">-</p>
+          </div>
+          <div>
+            <h3>Bilanciamento</h3>
+            <p id="scoreValue" class="score">-</p>
+          </div>
+          <div>
+            <h3>Miglioramenti suggeriti</h3>
+            <ul id="improvementList" class="suggestions"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" id="librarySection">
+        <div class="section-header">
+          <h2>Biblioteca formule</h2>
+          <div class="section-actions">
+            <button id="saveFormulaBtn" type="button">Salva formula</button>
+            <button id="exportFormulaBtn" class="ghost-btn" type="button">Esporta JSON</button>
+          </div>
+        </div>
+        <div id="libraryList" class="library"></div>
+      </section>
+
+      <footer class="microcopy">
+        I dati restano sul tuo dispositivo (localStorage). Esporta per condividere o archiviare.
+      </footer>
+    </main>
+
+    <template id="materialRowTemplate">
+      <div class="material-row">
+        <div class="material-main">
+          <label class="field">
+            <span>Nota</span>
+            <input type="text" class="note-input" list="noteLibrary" placeholder="Seleziona" />
+          </label>
+        </div>
+        <div class="material-amounts">
+          <label class="field">
+            <span>Grammi</span>
+            <input type="number" class="grams-input" min="0" step="0.01" />
+          </label>
+          <label class="field">
+            <span>Millilitri</span>
+            <input type="number" class="ml-input" min="0" step="0.01" />
+          </label>
+          <label class="field">
+            <span>Gocce</span>
+            <input type="number" class="drops-input" min="0" step="1" />
+          </label>
+          <label class="field">
+            <span>%</span>
+            <input type="number" class="percent-input" min="0" max="100" step="0.01" />
+          </label>
+        </div>
+        <button type="button" class="icon-btn remove-btn" aria-label="Rimuovi nota">✕</button>
+      </div>
+    </template>
+
+    <datalist id="noteLibrary"></datalist>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
