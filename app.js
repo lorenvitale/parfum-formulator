@@ -71,6 +71,7 @@ function createMaterialRow(material) {
   const mlInput = clone.querySelector('.ml-input');
   const dropsInput = clone.querySelector('.drops-input');
   const percentInput = clone.querySelector('.percent-input');
+  const dilutionInput = clone.querySelector('.dilution-input');
   const removeBtn = clone.querySelector('.remove-btn');
 
   noteInput.addEventListener('input', (event) => {
@@ -106,6 +107,12 @@ function createMaterialRow(material) {
     updateMaterial(material.id, recalcMaterial(current, 'percent', percent));
   });
 
+  dilutionInput.addEventListener('input', (event) => {
+    if (syncing) return;
+    const dilution = clampPercentage(parseNumber(event.target.value));
+    updateMaterial(material.id, { dilution });
+  });
+
   removeBtn.addEventListener('click', () => {
     removeMaterial(material.id);
   });
@@ -117,6 +124,11 @@ function createMaterialRow(material) {
 function parseNumber(value) {
   const parsed = parseFloat(value);
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function clampPercentage(value) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(100, Math.max(0, value));
 }
 
 function getBatchWeight() {
@@ -132,6 +144,7 @@ function recalcMaterial(material, source, value) {
   const density = getDensity();
   const batchWeight = getBatchWeight();
   const payload = { ...material };
+  payload.dilution = clampPercentage(material.dilution ?? 100);
 
   switch (source) {
     case 'grams':
@@ -183,11 +196,31 @@ function syncMaterialRow(id) {
   if (!material || !row) return;
 
   syncing = true;
-  row.querySelector('.note-input').value = material.note || '';
-  row.querySelector('.grams-input').value = material.grams ? material.grams.toFixed(2) : '';
-  row.querySelector('.ml-input').value = material.ml ? material.ml.toFixed(2) : '';
-  row.querySelector('.drops-input').value = material.drops ? Math.round(material.drops) : '';
-  row.querySelector('.percent-input').value = material.percent ? material.percent.toFixed(2) : '';
+  const noteInput = row.querySelector('.note-input');
+  const gramsInput = row.querySelector('.grams-input');
+  const mlInput = row.querySelector('.ml-input');
+  const dropsInput = row.querySelector('.drops-input');
+  const percentInput = row.querySelector('.percent-input');
+  const dilutionInput = row.querySelector('.dilution-input');
+
+  if (document.activeElement !== noteInput) {
+    noteInput.value = material.note || '';
+  }
+  if (document.activeElement !== gramsInput) {
+    gramsInput.value = material.grams ? material.grams.toFixed(2) : '';
+  }
+  if (document.activeElement !== mlInput) {
+    mlInput.value = material.ml ? material.ml.toFixed(2) : '';
+  }
+  if (document.activeElement !== dropsInput) {
+    dropsInput.value = material.drops ? Math.round(material.drops) : '';
+  }
+  if (document.activeElement !== percentInput) {
+    percentInput.value = material.percent ? material.percent.toFixed(2) : '';
+  }
+  if (document.activeElement !== dilutionInput) {
+    dilutionInput.value = material.dilution ?? 100;
+  }
   syncing = false;
 }
 
@@ -199,7 +232,8 @@ function addMaterial(note = '') {
       grams: 0,
       ml: 0,
       drops: 0,
-      percent: 0
+      percent: 0,
+      dilution: 100
     },
     'init'
   );
@@ -600,7 +634,8 @@ function hydrateStateFromForm() {
       grams: parseNumber(row.querySelector('.grams-input').value),
       ml: parseNumber(row.querySelector('.ml-input').value),
       drops: parseNumber(row.querySelector('.drops-input').value),
-      percent: parseNumber(row.querySelector('.percent-input').value)
+      percent: parseNumber(row.querySelector('.percent-input').value),
+      dilution: clampPercentage(parseNumber(row.querySelector('.dilution-input').value || '100'))
     };
   });
 }

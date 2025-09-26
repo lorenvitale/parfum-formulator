@@ -43,11 +43,25 @@
           </label>
           <label class="field">
             <span>Lotto (g)</span>
-            <input id="batchWeight" type="number" min="0" step="0.01" value="100" />
+            <input
+              id="batchWeight"
+              type="number"
+              min="0"
+              step="0.01"
+              value="100"
+              inputmode="decimal"
+            />
           </label>
           <label class="field">
             <span>Densità media (g/ml)</span>
-            <input id="density" type="number" min="0.1" step="0.01" value="0.94" />
+            <input
+              id="density"
+              type="number"
+              min="0.1"
+              step="0.01"
+              value="0.94"
+              inputmode="decimal"
+            />
           </label>
           <label class="field">
             <span>Lotto (ml)</span>
@@ -128,19 +142,23 @@
         <div class="material-amounts">
           <label class="field">
             <span>Grammi</span>
-            <input type="number" class="grams-input" min="0" step="0.01" />
+            <input type="number" class="grams-input" min="0" step="0.01" inputmode="decimal" />
           </label>
           <label class="field">
             <span>Millilitri</span>
-            <input type="number" class="ml-input" min="0" step="0.01" />
+            <input type="number" class="ml-input" min="0" step="0.01" inputmode="decimal" />
           </label>
           <label class="field">
             <span>Gocce</span>
-            <input type="number" class="drops-input" min="0" step="1" />
+            <input type="number" class="drops-input" min="0" step="1" inputmode="numeric" pattern="[0-9]*" />
           </label>
           <label class="field">
             <span>%</span>
-            <input type="number" class="percent-input" min="0" max="100" step="0.01" />
+            <input type="number" class="percent-input" min="0" max="100" step="0.01" inputmode="decimal" />
+          </label>
+          <label class="field">
+            <span>Diluizione (%)</span>
+            <input type="number" class="dilution-input" min="0" max="100" step="0.1" inputmode="decimal" />
           </label>
         </div>
         <button type="button" class="icon-btn remove-btn" aria-label="Rimuovi nota">✕</button>
