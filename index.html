@@ -141,6 +141,40 @@
         </p>
       </section>
 
+      <section class="card" id="customNotesSection">
+        <h2>Note personalizzate</h2>
+        <form id="customNoteForm" class="custom-note-form">
+          <input type="hidden" id="customNoteId" />
+          <div class="custom-note-grid">
+            <label class="field">
+              <span>Nome nota</span>
+              <input
+                type="text"
+                id="customNoteName"
+                autocomplete="off"
+                placeholder="Es. Cardamomo CO2"
+                required
+              />
+            </label>
+            <fieldset class="field custom-note-fieldset" id="customNotePyramidGroup">
+              <legend>Livelli piramide</legend>
+            </fieldset>
+            <label class="field">
+              <span>Famiglie olfattive</span>
+              <select id="customNoteFamilies" multiple size="6"></select>
+              <span class="microcopy">
+                Suggerimento: seleziona più famiglie con Ctrl (Windows) o ⌘ (Mac).
+              </span>
+            </label>
+          </div>
+          <div class="form-actions">
+            <button type="submit">Salva nota</button>
+            <button type="button" class="ghost-btn" id="resetCustomNoteBtn">Annulla</button>
+          </div>
+        </form>
+        <div id="customNotesList" class="custom-notes-list"></div>
+      </section>
+
       <section class="card" id="insightsSection">
         <h2>Analisi automatica</h2>
         <div class="insights-grid">

@@ -21,20 +21,29 @@ const newFormulaBtn = document.getElementById('newFormulaBtn');
 const formulaNameInput = document.getElementById('formulaName');
 const formulaTypeSelect = document.getElementById('formulaType');
 const themeToggleBtn = document.getElementById('themeToggle');
+const customNoteForm = document.getElementById('customNoteForm');
+const customNoteIdInput = document.getElementById('customNoteId');
+const customNoteNameInput = document.getElementById('customNoteName');
+const customNotePyramidGroup = document.getElementById('customNotePyramidGroup');
+const customNoteFamiliesSelect = document.getElementById('customNoteFamilies');
+const resetCustomNoteBtn = document.getElementById('resetCustomNoteBtn');
+const customNotesList = document.getElementById('customNotesList');
 
 const DROPS_PER_ML = 20;
 const STORAGE_KEY = 'parfum-formulator__formulas';
 const THEME_KEY = 'parfum-formulator__theme';
+const CUSTOM_NOTES_KEY = 'parfum-formulator__notes';
 
-const NOTE_INDEX = new Map(NOTES_DATA.map((note) => [normaliseName(note.name), note]));
 const DEFAULT_LEVELS = DEFAULT_PYRAMID;
 
 let syncing = false;
+let noteIndex = new Map();
 
 const state = {
   materials: [],
   formulas: [],
-  editingId: null
+  editingId: null,
+  customNotes: []
 };
 
 function getMaterial(id) {
@@ -63,6 +72,16 @@ function slugify(value = '') {
 function safeNumber(value, fallback = 0) {
   const numeric = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(numeric) ? numeric : fallback;
+}
+
+function ensureArray(value) {
+  if (Array.isArray(value)) {
+    return value.filter((item) => typeof item === 'string' && item.trim() !== '');
+  }
+  if (typeof value === 'string' && value.trim() !== '') {
+    return [value.trim()];
+  }
+  return [];
 }
 
 function hasExportableMaterials() {
@@ -125,15 +144,292 @@ function toggleTheme() {
   persistTheme(next);
 }
 
+function buildNoteCatalog() {
+  const baseNotes = Array.isArray(NOTES_DATA) ? [...NOTES_DATA] : [];
+  const customNotes = Array.isArray(state.customNotes) ? [...state.customNotes] : [];
+  const combined = [...baseNotes, ...customNotes]
+    .filter((note) => note && typeof note.name === 'string')
+    .map((note) => ({
+      ...note,
+      name: note.name.trim()
+    }));
+
+  combined.sort((a, b) => a.name.localeCompare(b.name, 'it', { sensitivity: 'base' }));
+  noteIndex = new Map(combined.map((note) => [normaliseName(note.name), note]));
+  return combined;
+}
+
 function loadNoteLibrary() {
+  if (!noteLibrary) return;
+  const catalog = buildNoteCatalog();
   noteLibrary.innerHTML = '';
   const fragment = document.createDocumentFragment();
-  NOTES_DATA.sort((a, b) => a.name.localeCompare(b.name, 'it')).forEach((note) => {
+  catalog.forEach((note) => {
     const option = document.createElement('option');
     option.value = note.name;
     fragment.appendChild(option);
   });
   noteLibrary.appendChild(fragment);
+}
+
+function renderCustomNoteControls() {
+  if (!customNotePyramidGroup) return;
+  customNotePyramidGroup.innerHTML = '';
+  DEFAULT_LEVELS.forEach((level) => {
+    const id = `custom-pyramid-${slugify(level)}`;
+    const wrapper = document.createElement('label');
+    wrapper.className = 'choice-chip';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.name = 'customNotePyramid';
+    input.value = level;
+    input.id = id;
+    if (level === 'Cuore') {
+      input.checked = true;
+    }
+    const span = document.createElement('span');
+    span.textContent = level;
+    span.setAttribute('data-label', level);
+    wrapper.appendChild(input);
+    wrapper.appendChild(span);
+    customNotePyramidGroup.appendChild(wrapper);
+  });
+
+  if (customNoteFamiliesSelect) {
+    customNoteFamiliesSelect.innerHTML = '';
+    const families = Array.isArray(OLFACTIVE_FAMILIES) ? [...OLFACTIVE_FAMILIES] : [];
+    families
+      .slice()
+      .sort((a, b) => a.localeCompare(b, 'it', { sensitivity: 'base' }))
+      .forEach((family) => {
+        const option = document.createElement('option');
+        option.value = family;
+        option.textContent = family;
+        customNoteFamiliesSelect.appendChild(option);
+      });
+  }
+}
+
+function getSelectedPyramidLevels() {
+  if (!customNotePyramidGroup) return [];
+  return Array.from(customNotePyramidGroup.querySelectorAll('input[type="checkbox"]:checked')).map(
+    (input) => input.value
+  );
+}
+
+function getSelectedFamilies() {
+  if (!customNoteFamiliesSelect) return [];
+  return Array.from(customNoteFamiliesSelect.selectedOptions).map((option) => option.value);
+}
+
+function normaliseCustomNote(note) {
+  if (!note || typeof note.name !== 'string') return null;
+  const name = note.name.trim();
+  if (!name) return null;
+  const pyramid = ensureArray(note.pyramid)
+    .map((level) => DEFAULT_LEVELS.find((item) => item.toLowerCase() === level.toLowerCase()) || level)
+    .filter((level) => DEFAULT_LEVELS.includes(level));
+  const families = ensureArray(note.families);
+  const safeFamilies = families.length ? [...new Set(families)] : ['Personalizzata'];
+  const safePyramid = pyramid.length ? [...new Set(pyramid)] : ['Cuore'];
+  const id = typeof note.id === 'string' && note.id ? note.id : `custom-${slugify(name) || Date.now().toString(36)}`;
+  return {
+    id,
+    name,
+    families: safeFamilies,
+    pyramid: safePyramid
+  };
+}
+
+function loadCustomNotes() {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    const raw = localStorage.getItem(CUSTOM_NOTES_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      state.customNotes = parsed
+        .map((note) => normaliseCustomNote(note))
+        .filter((note) => note !== null);
+    }
+  } catch (error) {
+    console.warn('Impossibile caricare le note personalizzate', error);
+    state.customNotes = [];
+  }
+}
+
+function persistCustomNotes() {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(CUSTOM_NOTES_KEY, JSON.stringify(state.customNotes));
+  } catch (error) {
+    console.warn('Impossibile salvare le note personalizzate', error);
+  }
+}
+
+function renderCustomNotes() {
+  if (!customNotesList) return;
+  customNotesList.innerHTML = '';
+  if (!state.customNotes.length) {
+    const empty = document.createElement('p');
+    empty.className = 'microcopy';
+    empty.textContent = 'Salva qui le tue note personalizzate per riutilizzarle velocemente.';
+    customNotesList.appendChild(empty);
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  state.customNotes
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name, 'it', { sensitivity: 'base' }))
+    .forEach((note) => {
+      const item = document.createElement('article');
+      item.className = 'custom-note-card';
+      item.dataset.id = note.id;
+
+      const title = document.createElement('h4');
+      title.textContent = note.name;
+      item.appendChild(title);
+
+      const meta = document.createElement('p');
+      meta.className = 'microcopy';
+      const families = note.families.join(', ');
+      const pyramid = note.pyramid.join(' · ');
+      meta.textContent = `${families} · Piramide: ${pyramid}`;
+      item.appendChild(meta);
+
+      const actions = document.createElement('div');
+      actions.className = 'custom-note-actions';
+
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'ghost-btn';
+      editBtn.textContent = 'Modifica';
+      editBtn.addEventListener('click', () => populateCustomNoteForm(note));
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.className = 'ghost-btn';
+      deleteBtn.textContent = 'Elimina';
+      deleteBtn.addEventListener('click', () => deleteCustomNote(note.id));
+
+      actions.append(editBtn, deleteBtn);
+      item.appendChild(actions);
+      fragment.appendChild(item);
+    });
+
+  customNotesList.appendChild(fragment);
+}
+
+function resetCustomNoteForm() {
+  if (!customNoteForm) return;
+  customNoteForm.reset();
+  if (customNoteIdInput) {
+    customNoteIdInput.value = '';
+  }
+  if (customNotePyramidGroup) {
+    customNotePyramidGroup
+      .querySelectorAll('input[type="checkbox"]')
+      .forEach((input) => {
+        input.checked = input.value === 'Cuore';
+      });
+  }
+  if (customNoteFamiliesSelect) {
+    Array.from(customNoteFamiliesSelect.options).forEach((option) => {
+      option.selected = false;
+    });
+  }
+}
+
+function populateCustomNoteForm(note) {
+  if (!customNoteForm || !note || !customNoteNameInput) return;
+  if (customNoteIdInput) {
+    customNoteIdInput.value = note.id;
+  }
+  customNoteNameInput.value = note.name;
+  if (customNotePyramidGroup) {
+    const selected = new Set(note.pyramid);
+    customNotePyramidGroup
+      .querySelectorAll('input[type="checkbox"]')
+      .forEach((input) => {
+        input.checked = selected.has(input.value);
+      });
+  }
+  if (customNoteFamiliesSelect) {
+    const selectedFamilies = new Set(note.families);
+    Array.from(customNoteFamiliesSelect.options).forEach((option) => {
+      option.selected = selectedFamilies.has(option.value);
+    });
+  }
+  customNoteNameInput.focus();
+}
+
+function deleteCustomNote(id) {
+  state.customNotes = state.customNotes.filter((note) => note.id !== id);
+  persistCustomNotes();
+  loadNoteLibrary();
+  renderCustomNotes();
+  updateInsights();
+}
+
+function handleCustomNoteSubmit(event) {
+  event.preventDefault();
+  if (!customNoteForm || !customNoteNameInput) return;
+  const name = customNoteNameInput.value.trim();
+  if (!name) {
+    alert('Inserisci un nome per la nota personalizzata.');
+    customNoteNameInput.focus();
+    return;
+  }
+
+  const baseExists = NOTES_DATA.some((note) => normaliseName(note.name) === normaliseName(name));
+  if (baseExists) {
+    alert('Esiste già una nota con questo nome nel catalogo. Scegli un nome differente o aggiungi una variante.');
+    return;
+  }
+
+  const pyramid = getSelectedPyramidLevels();
+  if (!pyramid.length) {
+    alert('Seleziona almeno un livello della piramide olfattiva.');
+    return;
+  }
+
+  let families = getSelectedFamilies();
+  if (!families.length) {
+    families = ['Personalizzata'];
+  }
+
+  const id = customNoteIdInput ? customNoteIdInput.value.trim() : '';
+  const duplicate = state.customNotes.find(
+    (note) => note.id !== id && normaliseName(note.name) === normaliseName(name)
+  );
+  if (duplicate) {
+    alert('Hai già salvato una nota personalizzata con questo nome.');
+    return;
+  }
+
+  const payload = {
+    id: id || `custom-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+    name,
+    pyramid,
+    families
+  };
+
+  const normalised = normaliseCustomNote(payload);
+  if (!normalised) return;
+
+  const index = state.customNotes.findIndex((note) => note.id === normalised.id);
+  if (index > -1) {
+    state.customNotes[index] = normalised;
+  } else {
+    state.customNotes.push(normalised);
+  }
+
+  persistCustomNotes();
+  loadNoteLibrary();
+  renderCustomNotes();
+  updateInsights();
+  resetCustomNoteForm();
 }
 
 function createMaterialRow(material) {
@@ -349,8 +645,9 @@ function updateBatchOutputs() {
 }
 
 function getMaterialProfile(noteName) {
+  if (!noteName) return null;
   const normalised = normaliseName(noteName);
-  return NOTE_INDEX.get(normalised) || null;
+  return noteIndex.get(normalised) || null;
 }
 
 function computeInsights() {
@@ -562,13 +859,19 @@ function saveFormula() {
 }
 
 function persistLibrary() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.formulas));
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.formulas));
+  } catch (error) {
+    console.warn('Impossibile salvare la libreria di formule', error);
+  }
 }
 
 function loadLibrary() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return;
+  if (typeof localStorage === 'undefined') return;
   try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
       state.formulas = parsed;
@@ -824,11 +1127,20 @@ function initEvents() {
   if (themeToggleBtn) {
     themeToggleBtn.addEventListener('click', toggleTheme);
   }
+  if (customNoteForm) {
+    customNoteForm.addEventListener('submit', handleCustomNoteSubmit);
+  }
+  if (resetCustomNoteBtn) {
+    resetCustomNoteBtn.addEventListener('click', () => resetCustomNoteForm());
+  }
 }
 
 function init() {
   applyTheme(getStoredTheme());
+  renderCustomNoteControls();
+  loadCustomNotes();
   loadNoteLibrary();
+  renderCustomNotes();
   loadLibrary();
   renderLibrary();
   addInitialRows();
