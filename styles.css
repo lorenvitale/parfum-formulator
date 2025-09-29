@@ -5,6 +5,7 @@
   --surface-ghost: rgba(255, 255, 255, 0.6);
   --ink: #111118;
   --ink-soft: #5b5b69;
+  --logo-color: var(--ink);
   --accent: #4c5fd5;
   --accent-soft: rgba(76, 95, 213, 0.08);
   --border: rgba(17, 17, 24, 0.08);
@@ -35,6 +36,7 @@ body[data-theme='dark'] {
   --surface-ghost: rgba(255, 255, 255, 0.08);
   --ink: #f7f8ff;
   --ink-soft: #b2bbd4;
+  --logo-color: var(--ink);
   --accent: #8e9bff;
   --accent-soft: rgba(142, 155, 255, 0.22);
   --border: rgba(247, 248, 255, 0.12);
@@ -55,6 +57,29 @@ body[data-theme='dark'] {
   align-items: flex-start;
   gap: 1rem;
   margin-bottom: 2rem;
+}
+
+.brand {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.2rem;
+  color: var(--logo-color);
+  flex: 1;
+}
+
+.brand-logo {
+  width: clamp(56px, 12vw, 76px);
+  height: auto;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.brand text {
+  letter-spacing: 0.02em;
+}
+
+.brand-text h1 {
+  margin: 0 0 0.5rem;
 }
 
 .hero h1 {
@@ -378,6 +403,16 @@ footer.microcopy {
   .hero {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .brand {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.9rem;
+  }
+
+  .brand-logo {
+    width: 64px;
   }
 
   .hero-actions {
