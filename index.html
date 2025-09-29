@@ -168,14 +168,16 @@
           <h2>Biblioteca formule</h2>
           <div class="section-actions">
             <button id="saveFormulaBtn" type="button">Salva formula</button>
-            <button id="exportFormulaBtn" class="ghost-btn" type="button">Esporta JSON</button>
+            <button id="exportPdfBtn" class="ghost-btn" type="button">Esporta PDF</button>
+            <button id="exportExcelBtn" class="ghost-btn" type="button">Esporta Excel</button>
           </div>
         </div>
         <div id="libraryList" class="library"></div>
       </section>
 
       <footer class="microcopy">
-        I dati restano sul tuo dispositivo (localStorage). Esporta per condividere o archiviare.
+        I dati restano sul tuo dispositivo (localStorage). Esporta in PDF o Excel per condividere o
+        archiviare.
       </footer>
     </main>
 
@@ -215,6 +217,9 @@
 
     <datalist id="noteLibrary"></datalist>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script type="module" src="app.js"></script>
   </body>
 </html>

@@ -14,7 +14,8 @@ const familyBadge = document.getElementById('familyBadge');
 const scoreValue = document.getElementById('scoreValue');
 const improvementList = document.getElementById('improvementList');
 const saveFormulaBtn = document.getElementById('saveFormulaBtn');
-const exportFormulaBtn = document.getElementById('exportFormulaBtn');
+const exportPdfBtn = document.getElementById('exportPdfBtn');
+const exportExcelBtn = document.getElementById('exportExcelBtn');
 const libraryList = document.getElementById('libraryList');
 const newFormulaBtn = document.getElementById('newFormulaBtn');
 const formulaNameInput = document.getElementById('formulaName');
@@ -47,6 +48,33 @@ const formatter = new Intl.NumberFormat('it-IT', {
 
 function normaliseName(value = '') {
   return value.toString().trim().toLowerCase();
+}
+
+function slugify(value = '') {
+  return value
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/gi, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '-');
+}
+
+function safeNumber(value, fallback = 0) {
+  const numeric = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(numeric) ? numeric : fallback;
+}
+
+function hasExportableMaterials() {
+  return state.materials.some((material) => {
+    return (
+      (material.note && material.note.trim() !== '') ||
+      safeNumber(material.grams) > 0 ||
+      safeNumber(material.ml) > 0 ||
+      safeNumber(material.drops) > 0 ||
+      safeNumber(material.percent) > 0
+    );
+  });
 }
 
 function uid() {
@@ -654,21 +682,112 @@ function deleteFormula(id) {
   renderLibrary();
 }
 
-function exportFormula() {
-  if (!state.materials.length) {
-    alert('Nessuna formula da esportare.');
+function ensureExportableFormula() {
+  hydrateStateFromForm();
+  if (!state.materials.length || !hasExportableMaterials()) {
+    alert('Aggiungi almeno una nota o un valore prima di esportare.');
+    return null;
+  }
+  return collectFormula();
+}
+
+function exportFormulaAsPdf() {
+  const formula = ensureExportableFormula();
+  if (!formula) return;
+  const jspdf = window.jspdf;
+  if (!jspdf || typeof jspdf.jsPDF !== 'function') {
+    alert('Impossibile generare il PDF: libreria non disponibile.');
     return;
   }
-  const formula = collectFormula();
-  const blob = new Blob([JSON.stringify(formula, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `${formula.name.replace(/\s+/g, '-')}.json`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  const doc = new jspdf.jsPDF({ unit: 'pt', format: 'a4' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(18);
+  doc.text('Parfum Formulator', 40, 50);
+
+  doc.setFontSize(14);
+  doc.text(`Formula: ${formula.name}`, 40, 80);
+
+  const metaStartY = 100;
+  const meta = [
+    `Tipologia: ${formula.type}`,
+    `Lotto (g): ${formatter.format(formula.batchWeight)}`,
+    `Densità media (g/ml): ${formatter.format(formula.density)}`,
+    `Ultimo aggiornamento: ${new Date(formula.updatedAt).toLocaleString('it-IT')}`
+  ];
+
+  doc.setFontSize(11);
+  meta.forEach((line, index) => {
+    doc.text(line, 40, metaStartY + index * 16);
+  });
+
+  const startY = metaStartY + meta.length * 16 + 20;
+  const tableRows = formula.materials.map((material, index) => [
+    index + 1,
+    material.note || '-',
+    formatter.format(safeNumber(material.grams)),
+    formatter.format(safeNumber(material.ml)),
+    formatter.format(safeNumber(material.drops)),
+    formatter.format(safeNumber(material.percent)),
+    formatter.format(safeNumber(material.dilution))
+  ]);
+
+  if (typeof doc.autoTable === 'function') {
+    doc.autoTable({
+      head: [['#', 'Nota', 'Grammi', 'ml', 'Gocce', '%', 'Diluizione %']],
+      body: tableRows,
+      startY,
+      styles: { font: 'helvetica', fontSize: 10 },
+      headStyles: { fillColor: [52, 58, 64] }
+    });
+  } else {
+    let y = startY;
+    doc.setFontSize(12);
+    doc.text('# Nota | g | ml | gocce | % | diluizione', 40, y);
+    y += 18;
+    doc.setFontSize(10);
+    tableRows.forEach((row) => {
+      doc.text(row.join(' | '), 40, y);
+      y += 14;
+    });
+  }
+
+  const filename = `${slugify(formula.name || 'formula') || 'formula'}.pdf`;
+  doc.save(filename);
+}
+
+function exportFormulaAsExcel() {
+  const formula = ensureExportableFormula();
+  if (!formula) return;
+  if (typeof window.XLSX === 'undefined') {
+    alert('Impossibile generare il file Excel: libreria non disponibile.');
+    return;
+  }
+
+  const workbook = window.XLSX.utils.book_new();
+  const header = [
+    ['Formula', formula.name],
+    ['Tipologia', formula.type],
+    ['Lotto (g)', safeNumber(formula.batchWeight)],
+    ['Densità media (g/ml)', safeNumber(formula.density)],
+    ['Ultimo aggiornamento', new Date(formula.updatedAt).toLocaleString('it-IT')],
+    [],
+    ['#', 'Nota', 'Grammi', 'ml', 'Gocce', '%', 'Diluizione %']
+  ];
+  const rows = formula.materials.map((material, index) => [
+    index + 1,
+    material.note || '',
+    safeNumber(material.grams),
+    safeNumber(material.ml),
+    safeNumber(material.drops),
+    safeNumber(material.percent),
+    safeNumber(material.dilution)
+  ]);
+
+  const worksheet = window.XLSX.utils.aoa_to_sheet([...header, ...rows]);
+  window.XLSX.utils.book_append_sheet(workbook, worksheet, 'Formula');
+
+  const filename = `${slugify(formula.name || 'formula') || 'formula'}.xlsx`;
+  window.XLSX.writeFile(workbook, filename);
 }
 
 function hydrateStateFromForm() {
@@ -695,7 +814,12 @@ function initEvents() {
     hydrateStateFromForm();
     saveFormula();
   });
-  exportFormulaBtn.addEventListener('click', exportFormula);
+  if (exportPdfBtn) {
+    exportPdfBtn.addEventListener('click', exportFormulaAsPdf);
+  }
+  if (exportExcelBtn) {
+    exportExcelBtn.addEventListener('click', exportFormulaAsExcel);
+  }
   newFormulaBtn.addEventListener('click', resetFormula);
   if (themeToggleBtn) {
     themeToggleBtn.addEventListener('click', toggleTheme);
