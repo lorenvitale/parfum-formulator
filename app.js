@@ -144,19 +144,69 @@ function toggleTheme() {
   persistTheme(next);
 }
 
+function normaliseCatalogEntry(note) {
+  if (!note || typeof note.name !== 'string') return null;
+  const name = note.name.trim();
+  if (!name) return null;
+
+  const families = ensureArray(note.families)
+    .map((family) => family.trim())
+    .filter((family) => family.length > 0);
+
+  const pyramid = ensureArray(note.pyramid)
+    .map((level) => {
+      const normalised = level.trim();
+      const match = DEFAULT_LEVELS.find((item) => item.toLowerCase() === normalised.toLowerCase());
+      return match || null;
+    })
+    .filter(Boolean);
+
+  const safeFamilies = families.length
+    ? [...new Set(families)].sort((a, b) => a.localeCompare(b, 'it', { sensitivity: 'base' }))
+    : ['Personalizzata'];
+
+  const safePyramid = pyramid.length
+    ? [...new Set(pyramid)].sort((a, b) => DEFAULT_LEVELS.indexOf(a) - DEFAULT_LEVELS.indexOf(b))
+    : ['Cuore'];
+
+  return {
+    ...note,
+    name,
+    families: safeFamilies,
+    pyramid: safePyramid
+  };
+}
+
 function buildNoteCatalog() {
   const baseNotes = Array.isArray(NOTES_DATA) ? [...NOTES_DATA] : [];
   const customNotes = Array.isArray(state.customNotes) ? [...state.customNotes] : [];
   const combined = [...baseNotes, ...customNotes]
-    .filter((note) => note && typeof note.name === 'string')
-    .map((note) => ({
-      ...note,
-      name: note.name.trim()
-    }));
+    .map((note) => normaliseCatalogEntry(note))
+    .filter((note) => note !== null);
 
-  combined.sort((a, b) => a.name.localeCompare(b.name, 'it', { sensitivity: 'base' }));
-  noteIndex = new Map(combined.map((note) => [normaliseName(note.name), note]));
-  return combined;
+  const merged = new Map();
+  combined.forEach((note) => {
+    const key = normaliseName(note.name);
+    if (merged.has(key)) {
+      const existing = merged.get(key);
+      const families = [...new Set([...existing.families, ...note.families])].sort((a, b) =>
+        a.localeCompare(b, 'it', { sensitivity: 'base' })
+      );
+      const pyramid = [...new Set([...existing.pyramid, ...note.pyramid])].sort(
+        (a, b) => DEFAULT_LEVELS.indexOf(a) - DEFAULT_LEVELS.indexOf(b)
+      );
+      merged.set(key, { ...existing, families, pyramid });
+    } else {
+      merged.set(key, { ...note });
+    }
+  });
+
+  const catalog = [...merged.values()].sort((a, b) =>
+    a.name.localeCompare(b.name, 'it', { sensitivity: 'base' })
+  );
+
+  noteIndex = new Map(catalog.map((note) => [normaliseName(note.name), note]));
+  return catalog;
 }
 
 function loadNoteLibrary() {
@@ -223,21 +273,15 @@ function getSelectedFamilies() {
 }
 
 function normaliseCustomNote(note) {
-  if (!note || typeof note.name !== 'string') return null;
-  const name = note.name.trim();
-  if (!name) return null;
-  const pyramid = ensureArray(note.pyramid)
-    .map((level) => DEFAULT_LEVELS.find((item) => item.toLowerCase() === level.toLowerCase()) || level)
-    .filter((level) => DEFAULT_LEVELS.includes(level));
-  const families = ensureArray(note.families);
-  const safeFamilies = families.length ? [...new Set(families)] : ['Personalizzata'];
-  const safePyramid = pyramid.length ? [...new Set(pyramid)] : ['Cuore'];
-  const id = typeof note.id === 'string' && note.id ? note.id : `custom-${slugify(name) || Date.now().toString(36)}`;
+  const normalised = normaliseCatalogEntry(note);
+  if (!normalised) return null;
+  const id =
+    typeof note.id === 'string' && note.id.trim()
+      ? note.id.trim()
+      : `custom-${slugify(normalised.name) || Date.now().toString(36)}`;
   return {
-    id,
-    name,
-    families: safeFamilies,
-    pyramid: safePyramid
+    ...normalised,
+    id
   };
 }
 
@@ -451,28 +495,28 @@ function createMaterialRow(material) {
 
   gramsInput.addEventListener('input', (event) => {
     if (syncing) return;
-    const grams = parseNumber(event.target.value);
+    const grams = Math.max(0, parseNumber(event.target.value));
     const current = getMaterial(material.id) ?? material;
     updateMaterial(material.id, recalcMaterial(current, 'grams', grams));
   });
 
   mlInput.addEventListener('input', (event) => {
     if (syncing) return;
-    const ml = parseNumber(event.target.value);
+    const ml = Math.max(0, parseNumber(event.target.value));
     const current = getMaterial(material.id) ?? material;
     updateMaterial(material.id, recalcMaterial(current, 'ml', ml));
   });
 
   dropsInput.addEventListener('input', (event) => {
     if (syncing) return;
-    const drops = parseNumber(event.target.value);
+    const drops = Math.max(0, parseNumber(event.target.value));
     const current = getMaterial(material.id) ?? material;
     updateMaterial(material.id, recalcMaterial(current, 'drops', drops));
   });
 
   percentInput.addEventListener('input', (event) => {
     if (syncing) return;
-    const percent = parseNumber(event.target.value);
+    const percent = Math.min(100, Math.max(0, parseNumber(event.target.value)));
     const current = getMaterial(material.id) ?? material;
     updateMaterial(material.id, recalcMaterial(current, 'percent', percent));
   });
@@ -499,6 +543,70 @@ function parseNumber(value) {
 function clampPercentage(value) {
   if (!Number.isFinite(value)) return 0;
   return Math.min(100, Math.max(0, value));
+}
+
+function normaliseStoredMaterial(material) {
+  const source = material && typeof material === 'object' ? material : {};
+  const note = typeof source.note === 'string' ? source.note.trim() : '';
+  const grams = Math.max(0, safeNumber(source.grams));
+  const ml = Math.max(0, safeNumber(source.ml));
+  const drops = Math.max(0, safeNumber(source.drops));
+  const percent = Math.max(0, safeNumber(source.percent));
+  const dilution = clampPercentage(safeNumber(source.dilution, 100));
+
+  return {
+    note,
+    grams,
+    ml,
+    drops,
+    percent,
+    dilution
+  };
+}
+
+function normaliseStoredFormula(formula) {
+  if (!formula || typeof formula !== 'object') return null;
+
+  const id =
+    typeof formula.id === 'string' && formula.id.trim()
+      ? formula.id.trim()
+      : `formula-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+
+  const name =
+    typeof formula.name === 'string' && formula.name.trim()
+      ? formula.name.trim()
+      : 'Formula senza titolo';
+
+  const type =
+    typeof formula.type === 'string' && formula.type.trim()
+      ? formula.type.trim()
+      : 'EDP';
+
+  const batchWeight = Math.max(0, safeNumber(formula.batchWeight));
+  const densityRaw = safeNumber(formula.density, 1);
+  const density = densityRaw > 0 ? densityRaw : 1;
+
+  const materials = Array.isArray(formula.materials)
+    ? formula.materials.map((material) => normaliseStoredMaterial(material))
+    : [];
+
+  let updatedAt;
+  if (typeof formula.updatedAt === 'string') {
+    const parsed = Date.parse(formula.updatedAt);
+    updatedAt = Number.isNaN(parsed) ? new Date().toISOString() : new Date(parsed).toISOString();
+  } else {
+    updatedAt = new Date().toISOString();
+  }
+
+  return {
+    id,
+    name,
+    type,
+    batchWeight,
+    density,
+    materials,
+    updatedAt
+  };
 }
 
 function getBatchWeight() {
@@ -818,7 +926,7 @@ function addInitialRows() {
 function collectFormula() {
   const batchWeight = getBatchWeight();
   const density = getDensity();
-  return {
+  return normaliseStoredFormula({
     id: state.editingId ?? `formula-${Date.now()}`,
     name: formulaNameInput.value.trim() || 'Formula senza titolo',
     type: formulaTypeSelect.value,
@@ -826,7 +934,7 @@ function collectFormula() {
     density,
     materials: state.materials.map(({ id, ...material }) => material),
     updatedAt: new Date().toISOString()
-  };
+  });
 }
 
 function resetFormula() {
@@ -847,6 +955,7 @@ function saveFormula() {
     return;
   }
   const formula = collectFormula();
+  if (!formula) return;
   const index = state.formulas.findIndex((item) => item.id === formula.id);
   if (index > -1) {
     state.formulas[index] = formula;
@@ -874,7 +983,9 @@ function loadLibrary() {
     if (!raw) return;
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
-      state.formulas = parsed;
+      state.formulas = parsed
+        .map((item) => normaliseStoredFormula(item))
+        .filter((item) => item !== null);
     }
   } catch (error) {
     console.error('Errore nel parsing della libreria', error);
@@ -960,19 +1071,39 @@ function loadFormula(id) {
   densityInput.value = formula.density;
 
   materialsTable.innerHTML = '';
-  state.materials = formula.materials.map((material) => ({ ...material, id: uid() }));
+  state.materials = formula.materials.map((material) => ({
+    id: uid(),
+    ...normaliseStoredMaterial(material)
+  }));
   state.materials.forEach((material) => createMaterialRow(material));
   updateBatchOutputs();
+}
+
+function buildDuplicateName(name) {
+  const base = (typeof name === 'string' && name.trim()) ? name.trim() : 'Formula senza titolo';
+  const cleanBase = base.replace(/\s+\(copia(?:\s+\d+)?\)$/i, '');
+  const existingNames = new Set(state.formulas.map((item) => item.name));
+  let counter = 1;
+  let candidate = `${cleanBase} (copia)`;
+  while (existingNames.has(candidate)) {
+    counter += 1;
+    candidate = `${cleanBase} (copia ${counter})`;
+  }
+  return candidate;
 }
 
 function duplicateFormula(id) {
   const formula = state.formulas.find((item) => item.id === id);
   if (!formula) return;
-  const clone = {
+  const clone = normaliseStoredFormula({
     ...formula,
-    id: `formula-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-    name: `${formula.name} (copia)`
-  };
+    id: `formula-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+    name: buildDuplicateName(formula.name),
+    materials: Array.isArray(formula.materials)
+      ? formula.materials.map((material) => normaliseStoredMaterial(material))
+      : [],
+    updatedAt: new Date().toISOString()
+  });
   state.formulas.push(clone);
   persistLibrary();
   renderLibrary();
@@ -1096,14 +1227,17 @@ function exportFormulaAsExcel() {
 function hydrateStateFromForm() {
   state.materials = Array.from(materialsTable.querySelectorAll('.material-row')).map((row) => {
     const id = row.dataset.id || uid();
-    return {
-      id,
+    const material = normaliseStoredMaterial({
       note: row.querySelector('.note-input').value,
       grams: parseNumber(row.querySelector('.grams-input').value),
       ml: parseNumber(row.querySelector('.ml-input').value),
       drops: parseNumber(row.querySelector('.drops-input').value),
       percent: parseNumber(row.querySelector('.percent-input').value),
-      dilution: clampPercentage(parseNumber(row.querySelector('.dilution-input').value || '100'))
+      dilution: parseNumber(row.querySelector('.dilution-input').value || '100')
+    });
+    return {
+      id,
+      ...material
     };
   });
 }
