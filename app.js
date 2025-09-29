@@ -23,7 +23,7 @@ const formulaTypeSelect = document.getElementById('formulaType');
 const DROPS_PER_ML = 20;
 const STORAGE_KEY = 'parfum-formulator__formulas';
 
-const NOTE_INDEX = new Map(NOTES_DATA.map((note) => [normaliseName(note.name), note]));
+const { index: NOTE_INDEX, list: NOTE_LIBRARY } = buildNoteCatalog(NOTES_DATA);
 const DEFAULT_LEVELS = DEFAULT_PYRAMID;
 
 let syncing = false;
@@ -47,6 +47,48 @@ function normaliseName(value = '') {
   return value.toString().trim().toLowerCase();
 }
 
+function buildNoteCatalog(notes) {
+  const index = new Map();
+  const list = [];
+
+  notes.forEach((note) => {
+    if (!note || !note.name) return;
+
+    const key = normaliseName(note.name);
+    const families = Array.isArray(note.families) ? note.families : [];
+    const pyramid = Array.isArray(note.pyramid) ? note.pyramid : [];
+
+    if (index.has(key)) {
+      const existing = index.get(key);
+
+      families.forEach((family) => {
+        if (!existing.families.includes(family)) {
+          existing.families.push(family);
+        }
+      });
+
+      pyramid.forEach((level) => {
+        if (!existing.pyramid.includes(level)) {
+          existing.pyramid.push(level);
+        }
+      });
+    } else {
+      const entry = {
+        name: note.name,
+        families: [...families],
+        pyramid: [...pyramid]
+      };
+
+      index.set(key, entry);
+      list.push(entry);
+    }
+  });
+
+  list.sort((a, b) => a.name.localeCompare(b.name, 'it'));
+
+  return { index, list };
+}
+
 function uid() {
   return `mat-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 }
@@ -54,7 +96,7 @@ function uid() {
 function loadNoteLibrary() {
   noteLibrary.innerHTML = '';
   const fragment = document.createDocumentFragment();
-  NOTES_DATA.sort((a, b) => a.name.localeCompare(b.name, 'it')).forEach((note) => {
+  NOTE_LIBRARY.forEach((note) => {
     const option = document.createElement('option');
     option.value = note.name;
     fragment.appendChild(option);
