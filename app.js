@@ -636,7 +636,9 @@ function duplicateFormula(id) {
   const clone = {
     ...formula,
     id: `formula-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-    name: `${formula.name} (copia)`
+    name: `${formula.name} (copia)`,
+    updatedAt: new Date().toISOString(),
+    materials: formula.materials.map((item) => ({ ...item }))
   };
   state.formulas.push(clone);
   persistLibrary();
