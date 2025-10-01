@@ -15,6 +15,8 @@ const scoreValue = document.getElementById('scoreValue');
 const improvementList = document.getElementById('improvementList');
 const saveFormulaBtn = document.getElementById('saveFormulaBtn');
 const exportFormulaBtn = document.getElementById('exportFormulaBtn');
+const exportExcelBtn = document.getElementById('exportExcelBtn');
+const exportPdfBtn = document.getElementById('exportPdfBtn');
 const libraryList = document.getElementById('libraryList');
 const newFormulaBtn = document.getElementById('newFormulaBtn');
 const formulaNameInput = document.getElementById('formulaName');
@@ -43,8 +45,50 @@ const formatter = new Intl.NumberFormat('it-IT', {
   maximumFractionDigits: 2
 });
 
+function formatDecimal(value, maximumFractionDigits = 2) {
+  if (!Number.isFinite(value)) return '-';
+  return value.toLocaleString('it-IT', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits
+  });
+}
+
 function normaliseName(value = '') {
   return value.toString().trim().toLowerCase();
+}
+
+function escapeHtml(value = '') {
+  return value
+    .toString()
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function buildSafeFileName(name, extension) {
+  const base = name
+    ? name
+        .toString()
+        .trim()
+        .replace(/[\\/:*?"<>|]+/g, '')
+        .replace(/\s+/g, '-')
+        .toLowerCase()
+    : '';
+  const safeBase = base || 'formula';
+  return `${safeBase}.${extension}`;
+}
+
+function downloadFile(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 function buildNoteCatalog(notes) {
@@ -653,20 +697,268 @@ function deleteFormula(id) {
 }
 
 function exportFormula() {
+  hydrateStateFromForm();
   if (!state.materials.length) {
     alert('Nessuna formula da esportare.');
     return;
   }
   const formula = collectFormula();
   const blob = new Blob([JSON.stringify(formula, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `${formula.name.replace(/\s+/g, '-')}.json`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  downloadFile(blob, buildSafeFileName(formula.name, 'json'));
+}
+
+function computeMaterialTotals(materials) {
+  return materials.reduce(
+    (acc, item) => {
+      const grams = Number(item.grams) || 0;
+      const ml = Number(item.ml) || 0;
+      const drops = Number(item.drops) || 0;
+      const percent = Number(item.percent) || 0;
+      return {
+        grams: acc.grams + grams,
+        ml: acc.ml + ml,
+        drops: acc.drops + drops,
+        percent: acc.percent + percent
+      };
+    },
+    { grams: 0, ml: 0, drops: 0, percent: 0 }
+  );
+}
+
+function exportFormulaExcel() {
+  hydrateStateFromForm();
+  if (!state.materials.length) {
+    alert('Nessuna formula da esportare.');
+    return;
+  }
+
+  const formula = collectFormula();
+  const totals = computeMaterialTotals(formula.materials);
+  const generatedAt = new Date().toLocaleString('it-IT');
+
+  const metadataRows = [
+    ['Nome formula', formula.name],
+    ['Tipologia', formula.type],
+    ['Lotto (g)', formatDecimal(formula.batchWeight, 2)],
+    ['Densità (g/ml)', formatDecimal(formula.density, 3)],
+    ['Note inserite', `${formula.materials.length}`],
+    ['Generato il', generatedAt]
+  ];
+
+  const metadataTable = metadataRows
+    .map(
+      ([label, value]) =>
+        `<tr><th style="text-align:left;background:#eef1ff;padding:8px 12px;">${escapeHtml(
+          label
+        )}</th><td style="padding:8px 12px;">${escapeHtml(value)}</td></tr>`
+    )
+    .join('');
+
+  const materialsHeader =
+    '<tr style="background:#f7f7fb;font-weight:600;">' +
+    ['Nota', 'Grammi', 'Millilitri', 'Gocce', '%', 'Diluizione (%)']
+      .map((heading) => `<th style="padding:8px 12px;border-bottom:1px solid #dcdfee;text-align:left;">${escapeHtml(heading)}</th>`)
+      .join('') +
+    '</tr>';
+
+  const materialsRows = formula.materials
+    .map((material) => {
+      const cells = [
+        material.note || '—',
+        formatDecimal(material.grams, 2),
+        formatDecimal(material.ml, 2),
+        formatDecimal(material.drops, 0),
+        formatDecimal(material.percent, 2),
+        formatDecimal(Number(material.dilution ?? 100), 1)
+      ];
+      return (
+        '<tr>' +
+        cells
+          .map(
+            (value) =>
+              `<td style="padding:6px 12px;border-bottom:1px solid #eef0f7;vertical-align:top;">${escapeHtml(value)}</td>`
+          )
+          .join('') +
+        '</tr>'
+      );
+    })
+    .join('');
+
+  const totalsRow =
+    '<tr>' +
+    [
+      'Totale',
+      formatDecimal(totals.grams, 2),
+      formatDecimal(totals.ml, 2),
+      formatDecimal(Math.round(totals.drops), 0),
+      formatDecimal(totals.percent, 2),
+      '—'
+    ]
+      .map(
+        (value, index) =>
+          `<td style="padding:8px 12px;font-weight:${index === 0 ? 600 : 500};background:#f3f4f9;">${escapeHtml(
+            value
+          )}</td>`
+      )
+      .join('') +
+    '</tr>';
+
+  const htmlDocument = `<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <title>${escapeHtml(formula.name || 'formula')}</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body style="font-family:Arial,Helvetica,sans-serif;color:#111118;">
+  <h1 style="font-size:20px;">Parfum Formulator · ${escapeHtml(formula.name)}</h1>
+  <table style="border-collapse:collapse;margin-bottom:24px;min-width:320px;">
+    ${metadataTable}
+  </table>
+  <table style="border-collapse:collapse;min-width:480px;">
+    ${materialsHeader}
+    ${materialsRows ||
+      '<tr><td colspan="6" style="padding:12px;text-align:center;color:#6b6b7c;">Nessuna materia prima registrata.</td></tr>'}
+    ${formula.materials.length ? totalsRow : ''}
+  </table>
+</body>
+</html>`;
+
+  const blob = new Blob([htmlDocument], { type: 'application/vnd.ms-excel' });
+  downloadFile(blob, buildSafeFileName(formula.name, 'xls'));
+}
+
+function sanitizePdfText(value = '') {
+  return value
+    .toString()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/[^\x20-\x7E]/g, '')
+    .replace(/\\/g, '\\\\')
+    .replace(/\(/g, '\\(')
+    .replace(/\)/g, '\\)');
+}
+
+function generatePdfBlob(lines) {
+  const encoder = new TextEncoder();
+  const header = '%PDF-1.3\n';
+
+  const lineHeight = 16;
+  const startY = 800;
+  const contentCommands = ['BT', '/F1 12 Tf'];
+  lines.forEach((line, index) => {
+    const y = startY - index * lineHeight;
+    contentCommands.push(`1 0 0 1 50 ${y} Tm`);
+    contentCommands.push(`(${sanitizePdfText(line)}) Tj`);
+  });
+  contentCommands.push('ET');
+
+  const contentStream = contentCommands.join('\n');
+  const contentBytes = encoder.encode(contentStream);
+
+  const objects = [
+    '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n',
+    '2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n',
+    '3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n',
+    `4 0 obj\n<< /Length ${contentBytes.length} >>\nstream\n${contentStream}\nendstream\nendobj\n`,
+    '5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n'
+  ];
+
+  const headerBytes = encoder.encode(header);
+  const chunks = [];
+  const offsets = [];
+  let position = headerBytes.length;
+
+  objects.forEach((object) => {
+    const bytes = encoder.encode(object);
+    offsets.push(position);
+    chunks.push(bytes);
+    position += bytes.length;
+  });
+
+  let xref = `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  xref += offsets
+    .map((offset) => `${offset.toString().padStart(10, '0')} 00000 n \n`)
+    .join('');
+  if (!xref.endsWith('\n')) {
+    xref += '\n';
+  }
+
+  const startXref = position;
+  const trailer = `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${startXref}\n%%EOF`;
+
+  const xrefBytes = encoder.encode(xref);
+  const trailerBytes = encoder.encode(trailer);
+
+  const totalLength = headerBytes.length +
+    chunks.reduce((sum, chunk) => sum + chunk.length, 0) +
+    xrefBytes.length +
+    trailerBytes.length;
+
+  const buffer = new Uint8Array(totalLength);
+  let offset = 0;
+  buffer.set(headerBytes, offset);
+  offset += headerBytes.length;
+  chunks.forEach((chunk) => {
+    buffer.set(chunk, offset);
+    offset += chunk.length;
+  });
+  buffer.set(xrefBytes, offset);
+  offset += xrefBytes.length;
+  buffer.set(trailerBytes, offset);
+
+  return new Blob([buffer], { type: 'application/pdf' });
+}
+
+function exportFormulaPdf() {
+  hydrateStateFromForm();
+  if (!state.materials.length) {
+    alert('Nessuna formula da esportare.');
+    return;
+  }
+
+  const formula = collectFormula();
+  const totals = computeMaterialTotals(formula.materials);
+
+  const lines = [
+    'Parfum Formulator',
+    `Formula: ${formula.name}`,
+    `Tipologia: ${formula.type}`,
+    `Lotto: ${formatDecimal(formula.batchWeight, 2)} g`,
+    `Densita: ${formatDecimal(formula.density, 3)} g/ml`,
+    ''
+  ];
+
+  lines.push('Materie prime:');
+
+  if (formula.materials.length) {
+    formula.materials.forEach((material, index) => {
+      const note = material.note || `Nota ${index + 1}`;
+      const grams = formatDecimal(material.grams, 2);
+      const percent = formatDecimal(material.percent, 2);
+      const dilution = Number.isFinite(Number(material.dilution))
+        ? formatDecimal(Number(material.dilution), 1)
+        : '-';
+      lines.push(
+        `${index + 1}. ${note} · ${grams} g · ${percent}% · diluizione ${dilution}%`
+      );
+    });
+  } else {
+    lines.push('Nessuna materia prima registrata.');
+  }
+
+  lines.push('');
+  lines.push(
+    `Totale: ${formatDecimal(totals.grams, 2)} g · ${formatDecimal(totals.percent, 2)}% · ${formatDecimal(
+      Math.round(totals.drops),
+      0
+    )} gocce`
+  );
+  lines.push(`Generato il: ${new Date().toLocaleString('it-IT')}`);
+
+  const blob = generatePdfBlob(lines);
+  downloadFile(blob, buildSafeFileName(formula.name, 'pdf'));
 }
 
 function hydrateStateFromForm() {
@@ -694,6 +986,8 @@ function initEvents() {
     saveFormula();
   });
   exportFormulaBtn.addEventListener('click', exportFormula);
+  exportExcelBtn.addEventListener('click', exportFormulaExcel);
+  exportPdfBtn.addEventListener('click', exportFormulaPdf);
   newFormulaBtn.addEventListener('click', resetFormula);
 }
 
