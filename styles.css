@@ -280,6 +280,21 @@ button.ghost-btn {
   margin-top: 1rem;
 }
 
+.export-card .microcopy {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.export-actions button {
+  min-width: 160px;
+}
+
 footer.microcopy {
   text-align: center;
   margin-top: 3rem;
