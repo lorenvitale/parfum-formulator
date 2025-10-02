@@ -19,14 +19,20 @@ const exportExcelBtn = document.getElementById('exportExcelBtn');
 const exportPdfBtn = document.getElementById('exportPdfBtn');
 const libraryList = document.getElementById('libraryList');
 const newFormulaBtn = document.getElementById('newFormulaBtn');
+const themeToggle = document.getElementById('themeToggle');
 const formulaNameInput = document.getElementById('formulaName');
 const formulaTypeSelect = document.getElementById('formulaType');
 
 const DROPS_PER_ML = 20;
 const STORAGE_KEY = 'parfum-formulator__formulas';
+const THEME_STORAGE_KEY = 'parfum-formulator__theme';
 
 const { index: NOTE_INDEX, list: NOTE_LIBRARY } = buildNoteCatalog(NOTES_DATA);
 const DEFAULT_LEVELS = DEFAULT_PYRAMID;
+const themeMediaQuery =
+  typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    ? window.matchMedia('(prefers-color-scheme: dark)')
+    : null;
 
 let syncing = false;
 
@@ -35,6 +41,70 @@ const state = {
   formulas: [],
   editingId: null
 };
+
+function readStoredTheme() {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    const value = localStorage.getItem(THEME_STORAGE_KEY);
+    return value === 'dark' || value === 'light' ? value : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function storeThemePreference(theme) {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch (error) {
+    // Ignora errori di salvataggio (es. storage pieno o disabilitato)
+  }
+}
+
+function getPreferredTheme() {
+  const stored = readStoredTheme();
+  if (stored) return stored;
+  if (themeMediaQuery) {
+    return themeMediaQuery.matches ? 'dark' : 'light';
+  }
+  return 'light';
+}
+
+function applyTheme(theme) {
+  const selected = theme === 'dark' ? 'dark' : 'light';
+  document.body.dataset.theme = selected;
+  if (themeToggle) {
+    const isDark = selected === 'dark';
+    themeToggle.setAttribute('aria-checked', String(isDark));
+    themeToggle.setAttribute(
+      'aria-label',
+      isDark ? 'Attiva modalità chiara' : 'Attiva modalità scura'
+    );
+    themeToggle.setAttribute(
+      'title',
+      isDark ? 'Passa alla modalità chiara' : 'Passa alla modalità scura'
+    );
+  }
+}
+
+function initTheme() {
+  applyTheme(getPreferredTheme());
+
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      const nextTheme = document.body.dataset.theme === 'dark' ? 'light' : 'dark';
+      storeThemePreference(nextTheme);
+      applyTheme(nextTheme);
+    });
+  }
+
+  if (themeMediaQuery) {
+    themeMediaQuery.addEventListener('change', (event) => {
+      if (readStoredTheme()) return;
+      applyTheme(event.matches ? 'dark' : 'light');
+    });
+  }
+}
 
 function getMaterial(id) {
   return state.materials.find((item) => item.id === id);
@@ -1001,4 +1071,5 @@ function init() {
   updateInsights();
 }
 
+initTheme();
 init();
