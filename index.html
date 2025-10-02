@@ -12,6 +12,32 @@
       rel="stylesheet"
     />
   </head>
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = "https://xbduxfvclbcdezegvpwl.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhiZHV4ZnZjbGJjZGV6ZWd2cHdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzODI5MzEsImV4cCI6MjA3NDk1ODkzMX0.l7d4dqzeoUx4isDRfG2riWDSkP6n2mtaD2kEHtyIudU";
+
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  (async () => {
+    const { data: { session } } = await supa.auth.getSession();
+    const loginLink = document.getElementById('loginLink');
+    const userBox   = document.getElementById('userBox');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    if (session?.user) {
+      if (loginLink) loginLink.style.display = 'none';
+      if (userBox)   { userBox.style.display = 'inline'; userBox.textContent = `Ciao, ${session.user.email}`; }
+      if (logoutBtn) logoutBtn.style.display = 'inline';
+    }
+  })();
+
+  document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+    await supa.auth.signOut();
+    location.href = 'https://lorenvitale.github.io/parfum-formulator/';
+  });
+</script>
+
   <body>
     <main class="app-shell">
       <header class="hero">
