@@ -1,5 +1,5 @@
 /***** 1) CONFIGURA QUI LE TUE CHIAVI SUPABASE *****/
-const SUPABASE_URL = "https://parfum-formulator.supabase.co";
+const SUPABASE_URL = "https://https://xbduxfvclbcdezegvpwl.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhiZHV4ZnZjbGJjZGV6ZWd2cHdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzODI5MzEsImV4cCI6MjA3NDk1ODkzMX0.l7d4dqzeoUx4isDRfG2riWDSkP6n2mtaD2kEHtyIudU";
 
 /***** 2) SE USI LOCALSTORAGE NELLA HOME, METTI QUI LA CHIAVE CORRETTA *****/
