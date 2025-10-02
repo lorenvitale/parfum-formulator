@@ -23,7 +23,7 @@
           </p>
         </div>
         <div class="hero-actions">
-          <!-- Login/Logout -->
+          <!-- 🔹 LOGIN/LOGOUT PATCH -->
           <a
             id="loginLink"
             class="ghost-btn"
@@ -34,7 +34,7 @@
           <span id="userBox" class="microcopy" style="display:none;"></span>
           <button id="logoutBtn" class="ghost-btn" type="button" style="display:none;">Logout</button>
 
-          <!-- Altri pulsanti -->
+          <!-- 🔹 BOTTONI ORIGINALI -->
           <button id="newFormulaBtn" class="ghost-btn" type="button">Nuova formula</button>
           <button
             id="themeToggle"
@@ -53,7 +53,7 @@
         </div>
       </header>
 
-      <!-- SEZIONI ESISTENTI DEL TUO SITO -->
+      <!-- 🔹 SEZIONE BATCH -->
       <section class="card" id="batchSection">
         <h2>Dosaggio Batch</h2>
         <div class="grid">
@@ -92,14 +92,76 @@
         </p>
       </section>
 
-      <!-- altre sezioni già presenti... -->
+      <!-- 🔹 SEZIONE MATERIE PRIME -->
+      <section class="card" id="materialsSection">
+        <div class="section-header">
+          <h2>Materie Prime</h2>
+          <div class="section-actions">
+            <button id="addMaterialBtn" type="button">Aggiungi nota</button>
+            <button id="clearMaterialsBtn" class="ghost-btn" type="button">Svuota</button>
+          </div>
+        </div>
+        <div class="materials-table" id="materialsTable"></div>
+        <p class="microcopy">
+          Inserisci le note aromatiche in grammi. Le conversioni in ml, gocce e percentuali
+          sono calcolate automaticamente rispetto al lotto.
+        </p>
+      </section>
+
+      <!-- 🔹 SEZIONE ANALISI -->
+      <section class="card" id="insightsSection">
+        <h2>Analisi automatica</h2>
+        <div class="insights-grid">
+          <div>
+            <h3>Piramide olfattiva</h3>
+            <ul id="pyramidList" class="pyramid"></ul>
+          </div>
+          <div>
+            <h3>Famiglia predominante</h3>
+            <p id="familyBadge" class="badge">-</p>
+          </div>
+          <div>
+            <h3>Bilanciamento</h3>
+            <p id="scoreValue" class="score">-</p>
+          </div>
+          <div>
+            <h3>Miglioramenti suggeriti</h3>
+            <ul id="improvementList" class="suggestions"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 🔹 SEZIONE BIBLIOTECA -->
+      <section class="card" id="librarySection">
+        <div class="section-header">
+          <h2>Biblioteca formule</h2>
+          <div class="section-actions">
+            <button id="saveFormulaBtn" type="button">Salva formula</button>
+            <button id="exportFormulaBtn" class="ghost-btn" type="button">Esporta JSON</button>
+          </div>
+        </div>
+        <div id="libraryList" class="library"></div>
+      </section>
+
+      <!-- 🔹 SEZIONE EXPORT -->
+      <section class="card export-card" id="exportSection">
+        <h2>Esporta report</h2>
+        <p class="microcopy">
+          Scarica una copia strutturata della formula corrente per condividerla con il tuo team
+          o archiviarla offline.
+        </p>
+        <div class="export-actions">
+          <button id="exportExcelBtn" type="button">Esporta Excel</button>
+          <button id="exportPdfBtn" class="ghost-btn" type="button">Esporta PDF</button>
+        </div>
+      </section>
 
       <footer class="microcopy">
         I dati restano sul tuo dispositivo (localStorage). Esporta per condividere o archiviare.
       </footer>
     </main>
 
-    <!-- Template righe tabella -->
+    <!-- 🔹 TEMPLATE -->
     <template id="materialRowTemplate">
       <div class="material-row">
         <div class="material-main">
@@ -136,10 +198,10 @@
 
     <datalist id="noteLibrary"></datalist>
 
-    <!-- JS principali -->
+    <!-- JS originali -->
     <script type="module" src="app.js"></script>
 
-    <!-- Supabase auth script -->
+    <!-- 🔹 SCRIPT LOGIN/LOGOUT -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
       const SUPABASE_URL = "https://xbduxfvclbcdezegvpwl.supabase.co";
