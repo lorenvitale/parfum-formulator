@@ -22,10 +22,12 @@
       <h2>Accedi o registrati</h2>
       <input id="email" type="email" placeholder="Email" autocomplete="email" />
 
-      <!-- Password + occhietto -->
+      <!-- Password con occhietto accessibile -->
       <div style="position:relative">
         <input id="password" type="password" placeholder="Password (min 6)" autocomplete="current-password" />
         <button type="button" id="togglePassword"
+                aria-label="Mostra password"
+                aria-pressed="false"
                 style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#aaa;">
           👁️
         </button>
@@ -39,7 +41,6 @@
       <p class="micro">Dopo l’accesso verrai reindirizzato automaticamente alla pagina di partenza.</p>
     </section>
 
-    <!-- (Opzionale) mini sezione privata -->
     <section id="app" class="card" style="display:none">
       <h2>Salva nuova formula</h2>
       <input id="formula-name" placeholder="Nome formula" />
