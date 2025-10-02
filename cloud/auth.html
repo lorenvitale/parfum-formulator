@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Parfum Formulator — Area personale</title>
+  <link rel="stylesheet" href="./cloud.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header>
+    <h1>Parfum Formulator — Area personale</h1>
+    <nav id="user-nav" class="hidden">
+      <span id="user-email"></span>
+      <button id="btn-logout">Logout</button>
+    </nav>
+  </header>
+
+  <!-- BOX AUTH -->
+  <section id="auth-box">
+    <h2>Accedi o registrati</h2>
+    <input id="email" type="email" placeholder="Email" autocomplete="email" />
+    <input id="password" type="password" placeholder="Password (min 6)" autocomplete="current-password" />
+    <div class="row">
+      <button id="btn-login">Login</button>
+      <button id="btn-signup" class="secondary">Registrati</button>
+    </div>
+    <p id="auth-msg" class="msg"></p>
+  </section>
+
+  <!-- APP PRIVATA -->
+  <section id="app" class="hidden">
+    <div class="card">
+      <h2>Salva nuova formula</h2>
+      <input id="formula-name" placeholder="Nome formula (es. 'Giglio di Mare v2')" />
+      <textarea id="formula-json" rows="7" placeholder='Incolla JSON della formula (es. {"bergamotto":3,"vaniglia":1})'></textarea>
+      <div class="row">
+        <button id="btn-save">Salva formula</button>
+        <button id="btn-import" class="secondary">Importa dalla pagina principale</button>
+      </div>
+      <p id="save-msg" class="msg"></p>
+    </div>
+
+    <h3>Le mie formule</h3>
+    <ul id="list"></ul>
+  </section>
+
+  <script src="./cloud.js"></script>
+</body>
+</html>
