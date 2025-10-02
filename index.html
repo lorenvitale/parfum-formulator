@@ -22,7 +22,23 @@
             una visione chiara della piramide olfattiva.
           </p>
         </div>
-        <button id="newFormulaBtn" class="ghost-btn" type="button">Nuova formula</button>
+        <div class="hero-actions">
+          <button id="newFormulaBtn" class="ghost-btn" type="button">Nuova formula</button>
+          <button
+            id="themeToggle"
+            class="theme-toggle"
+            type="button"
+            role="switch"
+            aria-checked="false"
+            aria-label="Attiva modalità scura"
+          >
+            <span class="theme-toggle__icon" data-icon="sun" aria-hidden="true">☀️</span>
+            <span class="theme-toggle__track" aria-hidden="true">
+              <span class="theme-toggle__thumb"></span>
+            </span>
+            <span class="theme-toggle__icon" data-icon="moon" aria-hidden="true">🌙</span>
+          </button>
+        </div>
       </header>
 
       <section class="card" id="batchSection">
