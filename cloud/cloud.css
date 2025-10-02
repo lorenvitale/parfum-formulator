@@ -1,0 +1,15 @@
+*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+body{margin:0;padding:24px;background:#0b0c10;color:#e8e8e8}
+h1,h2,h3{margin:0 0 12px}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.hidden{display:none}
+.card{background:#14161a;padding:16px;border-radius:12px;margin:12px 0}
+input,textarea,button{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #2b2f36;background:#0f1115;color:#e8e8e8}
+button{cursor:pointer}
+button.secondary{background:#1b1e24}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+#user-nav{display:flex;gap:12px;align-items:center}
+.msg{font-size:0.95rem;opacity:.9}
+ul#list{list-style:none;padding-left:0}
+ul#list li{padding:10px;border:1px solid #2b2f36;border-radius:10px;margin:6px 0;background:#111318}
+ul#list li .meta{opacity:.8;font-size:.9rem}
