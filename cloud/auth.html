@@ -12,7 +12,7 @@
     <h1 style="margin:0">Parfum Formulator — Area personale</h1>
     <nav id="user-nav" style="display:none;gap:12px;align-items:center">
       <span id="user-email"></span>
-      <button id="btn-logout">Logout</button>
+      <button id="logoutBtn">Logout</button>
     </nav>
   </header>
 
@@ -21,7 +21,16 @@
     <section id="auth-box" class="card">
       <h2>Accedi o registrati</h2>
       <input id="email" type="email" placeholder="Email" autocomplete="email" />
-      <input id="password" type="password" placeholder="Password (min 6)" autocomplete="current-password" />
+
+      <!-- Password + occhietto -->
+      <div style="position:relative">
+        <input id="password" type="password" placeholder="Password (min 6)" autocomplete="current-password" />
+        <button type="button" id="togglePassword"
+                style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#aaa;">
+          👁️
+        </button>
+      </div>
+
       <div class="row">
         <button id="btn-login">Login</button>
         <button id="btn-signup" class="secondary">Registrati</button>
@@ -30,6 +39,7 @@
       <p class="micro">Dopo l’accesso verrai reindirizzato automaticamente alla pagina di partenza.</p>
     </section>
 
+    <!-- (Opzionale) mini sezione privata -->
     <section id="app" class="card" style="display:none">
       <h2>Salva nuova formula</h2>
       <input id="formula-name" placeholder="Nome formula" />
