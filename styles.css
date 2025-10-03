@@ -458,12 +458,12 @@ footer.microcopy {
 }
 
 .site-logo {
-  max-height: 90px;      /* limite in altezza */
-  width: auto;           /* mantiene proporzioni */
+  max-height: 90px;
+  max-width: 80%;  /* non occupa più del 80% della larghezza */
   height: auto;
-  display: block;
+  width: auto;
   margin-bottom: 0.6rem;
-  object-fit: contain;   /* mai deformato */
+  object-fit: contain;
 }
 
 @media (max-width: 520px) {
