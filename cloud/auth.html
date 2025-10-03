@@ -23,19 +23,15 @@
       <input id="email" type="email" placeholder="Email" autocomplete="email" />
 
       <!-- Password con occhietto accessibile -->
-      <div style="position:relative; display:flex; align-items:center;">
-  <input id="password"
-         type="password"
-         placeholder="Password (min 6)"
-         autocomplete="current-password"
-         style="flex:1; padding-right:40px;" />
-  <button type="button"
-          id="togglePassword"
-          aria-label="Mostra password"
-          aria-pressed="false"
-          style="position:absolute; right:10px; background:none; border:none; cursor:pointer; color:#aaa; font-size:1.1rem;">
-    👁️
-  </button>
+      <div class="password-field">
+  <input id="password" type="password" placeholder="Password (min 6)" autocomplete="current-password" />
+  <button
+    type="button"
+    id="togglePassword"
+    class="toggle-password"
+    aria-label="Mostra password"
+    aria-pressed="false"
+  >👁️</button>
 </div>
 
       <div class="row">
