@@ -121,10 +121,22 @@
             <p id="familyBadge" class="badge">-</p>
           </div>
           <div>
-            <h3>Bilanciamento</h3>
-            <p id="scoreValue" class="score">-</p>
-          </div>
-          <div>
+  <h3>Bilanciamento</h3>
+  <div id="balanceGauge" class="gauge">
+    <svg viewBox="0 0 200 120" class="gauge-svg" aria-label="Bilanciamento 1–10">
+      <!-- arco di fondo -->
+      <path class="gauge-bg" d="M10,110 A90,90 0 0 1 190,110" />
+      <!-- arco valore -->
+      <path class="gauge-arc" d="M10,110 A90,90 0 0 1 190,110" stroke-dasharray="0 999" />
+      <!-- tacche -->
+      <g class="gauge-ticks"></g>
+      <!-- valore al centro -->
+      <text id="gaugeValue" x="100" y="92" text-anchor="middle" class="gauge-value">-</text>
+      <text x="100" y="112" text-anchor="middle" class="gauge-scale">1          10</text>
+    </svg>
+  </div>
+</div>
+
             <h3>Miglioramenti suggeriti</h3>
             <ul id="improvementList" class="suggestions"></ul>
           </div>
