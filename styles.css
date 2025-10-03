@@ -583,3 +583,16 @@ body[data-theme='dark'] .site-logo{
 }
 
 /* colori dinamici in dark: già ereditano --accent / --ink */
+/* Etichette numeriche delle tacche (1–10) */
+.gauge-tick-label {
+  font: 600 11px/1 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  fill: var(--ink-soft);
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Leggera ottimizzazione rendering */
+.gauge-svg {
+  shape-rendering: geometricPrecision;
+  text-rendering: optimizeLegibility;
+}
