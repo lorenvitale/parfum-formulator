@@ -491,3 +491,39 @@ footer.microcopy {
 body[data-theme='dark'] .site-logo{
   filter: invert(1) grayscale(1) brightness(1.25) contrast(1.05);
 }
+/* ===== Animazioni logo + tagline ===== */
+@keyframes fadeUp {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.logo-box,
+.site-logo,
+.tagline,
+.hero-actions {
+  will-change: opacity, transform;
+}
+
+.site-logo {
+  opacity: 0;
+  animation: fadeUp .6s ease-out .05s forwards;
+}
+
+.tagline {
+  opacity: 0;
+  animation: fadeUp .6s ease-out .18s forwards; /* leggero delay dopo il logo */
+}
+
+.hero-actions {
+  opacity: 0;
+  animation: fadeUp .6s ease-out .28s forwards; /* poi arrivano i bottoni */
+}
+
+/* Rispetto utenti con ridotta animazione */
+@media (prefers-reduced-motion: reduce) {
+  .site-logo, .tagline, .hero-actions {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
