@@ -200,50 +200,79 @@
 
     <!-- JS originali -->
     <script type="module" src="app.js"></script>
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = "https://xbduxfvclbcdezegvpwl.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhiZHV4ZnZjbGJjZGV6ZWd2cHdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzODI5MzEsImV4cCI6MjA3NDk1ODkzMX0.l7d4dqzeoUx4isDRfG2riWDSkP6n2mtaD2kEHtyIudU";
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    <!-- 🔹 SCRIPT LOGIN/LOGOUT -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-      const SUPABASE_URL = "https://xbduxfvclbcdezegvpwl.supabase.co";
-      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhiZHV4ZnZjbGJjZGV6ZWd2cHdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzODI5MzEsImV4cCI6MjA3NDk1ODkzMX0.l7d4dqzeoUx4isDRfG2riWDSkP6n2mtaD2kEHtyIudU";
+  // helper per mostrare/nascondere sezioni private e pulire liste
+  function applyPrivacyUI(isLoggedIn) {
+    const privates = document.querySelectorAll('.private');
+    privates.forEach(el => el.style.display = isLoggedIn ? '' : 'none');
+    if (!isLoggedIn) {
+      // svuota elenco formule in UI
+      document.getElementById('libraryList')?.replaceChildren();
+    }
+  }
 
-      const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  (async () => {
+    const { data: { session } } = await supa.auth.getSession();
+    const isLogged = !!session?.user;
 
-      (async () => {
-        const { data: { session } } = await supa.auth.getSession();
-        const loginLink = document.getElementById('loginLink');
-        const userBox   = document.getElementById('userBox');
-        const logoutBtn = document.getElementById('logoutBtn');
+    // UI login/logout
+    const loginLink = document.getElementById('loginLink');
+    const userBox   = document.getElementById('userBox');
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (isLogged) {
+      if (loginLink) loginLink.style.display = 'none';
+      if (userBox)   { userBox.style.display = 'inline'; userBox.textContent = `Ciao, ${session.user.email}`; }
+      if (logoutBtn) logoutBtn.style.display = 'inline';
+    } else {
+      if (loginLink) loginLink.style.display = 'inline-block';
+      if (userBox)   userBox.style.display = 'none';
+      if (logoutBtn) logoutBtn.style.display = 'none';
+    }
 
-        if (session?.user) {
-          if (loginLink) loginLink.style.display = 'none';
-          if (userBox)   { userBox.style.display = 'inline'; userBox.textContent = `Ciao, ${session.user.email}`; }
-          if (logoutBtn) logoutBtn.style.display = 'inline';
-        }
-      })();
+    // Privacy: mostra/nascondi aree sensibili
+    applyPrivacyUI(isLogged);
 
-      document.getElementById('logoutBtn')?.addEventListener('click', async () => {
-        try {
-          await supa.auth.signOut();
-          sessionStorage.clear();
-          localStorage.removeItem("sb-" + SUPABASE_URL.match(/https:\/\/(.*?)\./)[1] + "-auth-token");
+    // Se cambia lo stato (login/logout da un’altra pagina), aggiorna
+    supa.auth.onAuthStateChange((_e, sess) => applyPrivacyUI(!!sess?.user));
+  })();
 
-          // toast
-          const toast = document.createElement("div");
-          toast.textContent = "Sei uscito ✅";
-          Object.assign(toast.style, {
-            position: "fixed", bottom: "20px", right: "20px",
-            background: "#222", color: "#fff", padding: "10px 16px",
-            borderRadius: "8px", fontSize: "0.9rem", zIndex: "9999"
-          });
-          document.body.appendChild(toast);
+  // Logout con pulizia “riservata”
+  document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+    try {
+      await supa.auth.signOut();
 
-          setTimeout(() => { location.href = 'https://lorenvitale.github.io/parfum-formulator/'; }, 1200);
-        } catch (e) {
-          console.error("Logout error:", e);
-          location.href = 'https://lorenvitale.github.io/parfum-formulator/';
-        }
+      // cancella token supabase locale
+      sessionStorage.clear();
+      localStorage.removeItem("sb-" + SUPABASE_URL.match(/https:\/\/(.*?)\./)[1] + "-auth-token");
+
+      // 🔒 cancella anche dati locali del tool (prefisso tuo)
+      Object.keys(localStorage).forEach(k => {
+        if (k.startsWith('parfum-formulator:')) localStorage.removeItem(k);
       });
-    </script>
+
+      // nascondi sezioni private + svuota liste
+      applyPrivacyUI(false);
+
+      // toast
+      const toast = document.createElement("div");
+      toast.textContent = "Sei uscito ✅";
+      Object.assign(toast.style, {
+        position: "fixed", bottom: "20px", right: "20px",
+        background: "#222", color: "#fff", padding: "10px 16px",
+        borderRadius: "8px", fontSize: "0.9rem", zIndex: "9999"
+      });
+      document.body.appendChild(toast);
+
+      setTimeout(() => { location.href = 'https://lorenvitale.github.io/parfum-formulator/'; }, 1000);
+    } catch (e) {
+      location.href = 'https://lorenvitale.github.io/parfum-formulator/';
+    }
+  });
+</script>
   </body>
 </html>
