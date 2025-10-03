@@ -450,23 +450,24 @@ footer.microcopy {
 .logo-box {
   display: flex;
   flex-direction: column;
-  align-items: center;     /* centrato orizzontalmente */
-  text-align: center;      /* testo centrato sotto */
+  align-items: center;   /* centrato */
+  text-align: center;    /* anche il testo */
   margin-bottom: 1.5rem;
-  flex: 1;                 /* occupa lo spazio a sinistra della hero */
+  flex: 1;
 }
 
 .site-logo {
-  max-height: 90px;        /* controlla l’altezza massima */
-  width: auto;             /* mantiene le proporzioni */
+  max-height: 90px;      /* limite in altezza */
+  width: auto;           /* mantiene proporzioni */
   height: auto;
   display: block;
   margin-bottom: 0.6rem;
-  object-fit: contain;     /* non deforma mai */
+  object-fit: contain;   /* mai deformato */
 }
 
 @media (max-width: 520px) {
   .site-logo {
-    max-height: 70px;      /* logo più compatto su schermi piccoli */
+    max-height: 70px;    /* più piccolo su mobile */
   }
 }
+
