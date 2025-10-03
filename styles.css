@@ -527,3 +527,32 @@ body[data-theme='dark'] .site-logo{
     transform: none !important;
   }
 }
+/* Pulsante rimuovi più preciso e centrato */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  background: var(--surface-subtle);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  font-size: 1rem;
+  line-height: 1;         /* evita offset verticale */
+  padding: 0;             /* nessuna spaziatura interna */
+  transition: transform .12s ease, background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.icon-btn:hover {
+  background: var(--accent-soft);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px -12px rgba(0,0,0,.25);
+}
+.icon-btn:active {
+  transform: translateY(0);
+}
+.remove-btn { /* “X” più fine e centrata */
+  font-weight: 700;
+  letter-spacing: .02em;
+}
