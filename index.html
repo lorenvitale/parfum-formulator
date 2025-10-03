@@ -109,40 +109,49 @@
       </section>
 
       <!-- 🔹 SEZIONE ANALISI -->
-      <section class="card" id="insightsSection">
-        <h2>Analisi automatica</h2>
-        <div class="insights-grid">
-          <div>
-            <h3>Piramide olfattiva</h3>
-            <ul id="pyramidList" class="pyramid"></ul>
-          </div>
-          <div>
-            <h3>Famiglia predominante</h3>
-            <p id="familyBadge" class="badge">-</p>
-          </div>
-          <div>
-  <h3>Bilanciamento</h3>
-  <div id="balanceGauge" class="gauge">
-    <svg viewBox="0 0 200 120" class="gauge-svg" aria-label="Bilanciamento 1–10">
-      <!-- arco di fondo -->
-      <path class="gauge-bg" d="M10,110 A90,90 0 0 1 190,110" />
-      <!-- arco valore -->
-      <path class="gauge-arc" d="M10,110 A90,90 0 0 1 190,110" stroke-dasharray="0 999" />
-      <!-- tacche -->
-      <g class="gauge-ticks"></g>
-      <!-- valore al centro -->
-      <text id="gaugeValue" x="100" y="92" text-anchor="middle" class="gauge-value">-</text>
-      <text x="100" y="112" text-anchor="middle" class="gauge-scale">1          10</text>
-    </svg>
-  </div>
-    <p id="scoreValue" class="score" style="display:none">-</p>
-</div>
+     <section class="card" id="insightsSection">
+  <h2>Analisi automatica</h2>
+  <div class="insights-grid">
+    <!-- Colonna 1 -->
+    <div>
+      <h3>Piramide olfattiva</h3>
+      <ul id="pyramidList" class="pyramid"></ul>
+    </div>
 
-            <h3>Miglioramenti suggeriti</h3>
-            <ul id="improvementList" class="suggestions"></ul>
-          </div>
-        </div>
-      </section>
+    <!-- Colonna 2 -->
+    <div>
+      <h3>Famiglia predominante</h3>
+      <p id="familyBadge" class="badge">-</p>
+    </div>
+
+    <!-- Colonna 3 -->
+    <div>
+      <h3>Bilanciamento</h3>
+      <div id="balanceGauge" class="gauge">
+        <svg viewBox="0 0 200 120" class="gauge-svg" aria-label="Bilanciamento 1–10">
+          <!-- arco di fondo -->
+          <path class="gauge-bg" d="M10,110 A90,90 0 0 1 190,110" />
+          <!-- arco valore -->
+          <path class="gauge-arc" d="M10,110 A90,90 0 0 1 190,110" stroke-dasharray="0 999" />
+          <!-- tacche -->
+          <g class="gauge-ticks"></g>
+          <!-- valore al centro -->
+          <text id="gaugeValue" x="100" y="92" text-anchor="middle" class="gauge-value">-</text>
+          <text x="100" y="112" text-anchor="middle" class="gauge-scale">1          10</text>
+        </svg>
+      </div>
+      <!-- retro-compatibilità per app.js -->
+      <p id="scoreValue" class="score" style="display:none">-</p>
+    </div>
+
+    <!-- Colonna 4 -->
+    <div>
+      <h3>Miglioramenti suggeriti</h3>
+      <ul id="improvementList" class="suggestions"></ul>
+    </div>
+  </div>
+</section>
+
 
       <!-- 🔹 SEZIONE BIBLIOTECA -->
       <section class="card private" id="librarySection">
