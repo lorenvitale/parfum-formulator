@@ -584,7 +584,15 @@ function updateInsights() {
   });
 
   familyBadge.textContent = dominantFamily ?? '-';
-  scoreValue.textContent = totalWeight ? `${rating} / 5` : '-';
+  if (totalWeight) {
+  // conversione: se rating è su 5, lo porto su scala 10
+  const value10 = Math.round((rating / 5) * 10);
+  window.setBalanceScore(value10);
+} else {
+  scoreValue.textContent = '-';
+  window.updateBalanceGauge?.(1); // reset gauge al minimo
+}
+
 
   improvementList.innerHTML = '';
   suggestions.forEach((suggestion) => {
