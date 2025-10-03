@@ -556,3 +556,30 @@ body[data-theme='dark'] .site-logo{
   font-weight: 700;
   letter-spacing: .02em;
 }
+/* Gauge tachimetro */
+.gauge { display:flex; justify-content:center; align-items:center; }
+.gauge-svg { width: 100%; max-width: 380px; height: auto; }
+.gauge-bg {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 12;
+  stroke-linecap: round;
+}
+.gauge-arc {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 12;
+  stroke-linecap: round;
+  transition: stroke-dasharray .4s ease, stroke .3s ease;
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,.08));
+}
+.gauge-value {
+  font: 700 32px/1 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  fill: var(--ink);
+}
+.gauge-scale {
+  font: 600 12px/1 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  fill: var(--ink-soft);
+}
+
+/* colori dinamici in dark: già ereditano --accent / --ink */
