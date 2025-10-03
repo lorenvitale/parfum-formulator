@@ -447,28 +447,32 @@ footer.microcopy {
     align-self: center;
   }
 }
-/* --- Logo sito --- */
-.logo-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;   /* centrato */
-  text-align: center;    /* anche il testo */
-  margin-bottom: 1.5rem;
-  flex: 1;
+/* Logo centrato e ben visibile */
+.logo-box{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  margin-bottom:1.5rem;
+  text-align:center;
 }
 
-.site-logo {
-  max-height: 90px;
-  max-width: 80%;  /* non occupa più del 80% della larghezza */
-  height: auto;
-  width: auto;
-  margin-bottom: 0.6rem;
-  object-fit: contain;
+.site-logo{
+  width: min(60vw, 520px); /* cresce fino a 520px ma non oltre il 60% viewport */
+  height:auto;
+  display:block;
+  object-fit:contain;
+  image-rendering:auto;
 }
 
-@media (max-width: 520px) {
-  .site-logo {
-    max-height: 70px;    /* più piccolo su mobile */
+/* Mobile: un po' più grande rispetto a prima */
+@media (max-width:520px){
+  .site-logo{
+    width: min(78vw, 420px);
   }
 }
 
+/* Dark mode: linee chiare su sfondo scuro */
+body[data-theme='dark'] .site-logo{
+  /* Trasforma le linee nere in chiare senza toccare la trasparenza */
+  filter: invert(1) grayscale(1) brightness(1.25) contrast(1.05);
+}
