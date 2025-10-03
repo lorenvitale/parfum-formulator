@@ -1073,3 +1073,33 @@ function init() {
 
 initTheme();
 init();
+// --- Tachimetro: sincronizzazione automatica con #scoreValue ---
+// Si appoggia all'API globale definita in index.html: window.updateBalanceGauge(score)
+
+(function () {
+  const scoreEl = document.getElementById('scoreValue');
+  if (!scoreEl) return;
+
+  // Converte il testo in numero 1..10 e aggiorna il gauge
+  function syncGaugeFromText() {
+    const raw = (scoreEl.textContent || '').trim().replace(',', '.');
+    const n = Math.max(1, Math.min(10, Number(raw)));
+    if (!Number.isFinite(n)) return;
+    window.updateBalanceGauge?.(n);
+  }
+
+  // Osserva qualsiasi cambio di testo (anche fatto dal tuo codice attuale)
+  const mo = new MutationObserver(syncGaugeFromText);
+  mo.observe(scoreEl, { childList: true, characterData: true, subtree: true });
+
+  // Primo allineamento (se c'è già un valore)
+  syncGaugeFromText();
+
+  // Helper opzionale: usa questa funzione ovunque al posto di scoreEl.textContent = ...
+  // Così aggiorni UI + gauge con una sola riga.
+  window.setBalanceScore = function (value) {
+    const n = Math.max(1, Math.min(10, Math.round(Number(value) || 1)));
+    scoreEl.textContent = String(n);
+    window.updateBalanceGauge?.(n);
+  };
+})();
