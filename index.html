@@ -221,6 +221,178 @@
     <datalist id="noteLibrary"></datalist>
 
     <!-- JS originali -->
+    <!-- === Tachimetro: API + render (mettere PRIMA di app.js) === -->
+<script>
+(function () {
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const svg = document.querySelector("#balanceGauge .gauge-svg");
+  const arc = svg?.querySelector(".gauge-arc");
+  const bg  = svg?.querySelector(".gauge-bg");
+  const ticksGroup = svg?.querySelector(".gauge-ticks");
+  const valueText  = svg?.querySelector("#gaugeValue");
+  const scoreEl = document.getElementById("scoreValue"); // retro-compat con app.js
+
+  if (!svg || !arc || !bg || !ticksGroup) return;
+
+  // ======= Definizioni base (coerenti col path M10,110 A90,90 0 0 1 190,110)
+  const CX = 100, CY = 110, R = 90;
+  const BIG_TICK_LEN = 16;
+  const SMALL_TICK_LEN = 10;
+
+  // ======= Gradient blu dinamico (sfumatura coerente con --accent)
+  const defs = document.createElementNS(SVG_NS, "defs");
+  const grad = document.createElementNS(SVG_NS, "linearGradient");
+  grad.setAttribute("id", "gaugeGrad");
+  grad.setAttribute("x1", "0%");
+  grad.setAttribute("y1", "100%");
+  grad.setAttribute("x2", "100%");
+  grad.setAttribute("y2", "0%");
+  const stop1 = document.createElementNS(SVG_NS, "stop");
+  const stop2 = document.createElementNS(SVG_NS, "stop");
+  const cs = getComputedStyle(document.body);
+  const accent = cs.getPropertyValue("--accent").trim() || "#4c5fd5";
+  stop1.setAttribute("offset", "0%");
+  stop1.setAttribute("stop-color", accent);
+  stop1.setAttribute("stop-opacity", "0.35");
+  stop2.setAttribute("offset", "100%");
+  stop2.setAttribute("stop-color", accent);
+  stop2.setAttribute("stop-opacity", "1");
+  grad.appendChild(stop1);
+  grad.appendChild(stop2);
+  defs.appendChild(grad);
+
+  // Glow leggerissimo (opzionale e sobrio)
+  const glow = document.createElementNS(SVG_NS, "filter");
+  glow.setAttribute("id", "gaugeGlow");
+  const feDrop = document.createElementNS(SVG_NS, "feDropShadow");
+  feDrop.setAttribute("dx", "0");
+  feDrop.setAttribute("dy", "1");
+  feDrop.setAttribute("stdDeviation", "1.2");
+  feDrop.setAttribute("flood-color", accent);
+  feDrop.setAttribute("flood-opacity", "0.25");
+  glow.appendChild(feDrop);
+  defs.appendChild(glow);
+
+  svg.insertBefore(defs, svg.firstChild);
+  arc.setAttribute("stroke", "url(#gaugeGrad)");
+  arc.setAttribute("filter", "url(#gaugeGlow)");
+
+  // ======= Helpers di geometria
+  function polarPoint(angleDeg, radius) {
+    const rad = (angleDeg * Math.PI) / 180;
+    return [CX + Math.cos(rad) * radius, CY + Math.sin(rad) * radius];
+  }
+
+  function addTick(angleDeg, len, width, opacity) {
+    const [x1, y1] = polarPoint(angleDeg, R);
+    const [x2, y2] = polarPoint(angleDeg, R - len);
+    const line = document.createElementNS(SVG_NS, "line");
+    line.setAttribute("x1", x1.toFixed(2));
+    line.setAttribute("y1", y1.toFixed(2));
+    line.setAttribute("x2", x2.toFixed(2));
+    line.setAttribute("y2", y2.toFixed(2));
+    line.setAttribute("stroke", cs.getPropertyValue("--ink").trim() || "#111118");
+    line.setAttribute("stroke-opacity", opacity);
+    line.setAttribute("stroke-width", width);
+    line.setAttribute("stroke-linecap", "round");
+    ticksGroup.appendChild(line);
+    return { x2, y2 };
+  }
+
+  function addLabel(text, angleDeg) {
+    // Etichetta numerica leggermente più interna
+    const LABEL_R = R - BIG_TICK_LEN - 12; // spazio tra tacca e testo
+    const [x, y] = polarPoint(angleDeg, LABEL_R);
+    const t = document.createElementNS(SVG_NS, "text");
+    t.textContent = text;
+    t.setAttribute("x", x.toFixed(2));
+    t.setAttribute("y", y.toFixed(2));
+    t.setAttribute("text-anchor", "middle");
+    t.setAttribute("dominant-baseline", "middle");
+    t.setAttribute("class", "gauge-tick-label");
+    ticksGroup.appendChild(t);
+  }
+
+  // ======= Tacche & Etichette
+  ticksGroup.replaceChildren();
+  // Maggiori: 10 posizioni 1..10 → angolo 180°..0°
+  for (let v = 1; v <= 10; v++) {
+    const t = (v - 1) / 9;       // 0..1
+    const angle = 180 - 180 * t; // 180° → 0°
+    addTick(angle, BIG_TICK_LEN, 3, 0.85);
+    addLabel(String(v), angle);
+  }
+  // Minori: 3 tra ogni maggiore (¼, ½, ¾)
+  for (let seg = 0; seg < 9; seg++) {
+    for (let k = 1; k <= 3; k++) {
+      const t = (seg + k / 4) / 9;
+      const angle = 180 - 180 * t;
+      addTick(angle, SMALL_TICK_LEN, 2, 0.35);
+    }
+  }
+
+  // ======= Preparazione arco (per animazione via stroke-dasharray)
+  const totalLen = bg.getTotalLength ? bg.getTotalLength() : 282.743; // fallback sensato
+  arc.setAttribute("stroke-dasharray", `0 ${Math.ceil(totalLen)}`);
+
+  // Mapping valore → frazione 0..1
+  function valueToFraction(n) {
+    const val = Math.max(1, Math.min(10, Number(n) || 1));
+    return (val - 1) / 9;
+  }
+
+  // Gradiente dinamico in blu (modula opacità e una leggera rotazione dell’asse)
+  function tweakGradient(f) {
+    // opacità “soft” aumenta col punteggio
+    const soft = 0.25 + 0.5 * f; // 0.25..0.75
+    stop1.setAttribute("stop-opacity", soft.toFixed(2));
+    // leggero “tilt” del gradiente per dare vita all’arco
+    grad.setAttribute("x2", `${80 + 20 * f}%`);
+    grad.setAttribute("y2", `${(1 - f) * 20}%`);
+  }
+
+  // ======= API globale (usata da app.js via window.updateBalanceGauge / setBalanceScore)
+  window.updateBalanceGauge = function (value) {
+    const f = valueToFraction(value);
+    const filled = (totalLen * f).toFixed(2);
+    arc.setAttribute("stroke-dasharray", `${filled} ${Math.ceil(totalLen)}`);
+    if (valueText) {
+      const n = Math.max(1, Math.min(10, Math.round(Number(value) || 1)));
+      valueText.textContent = String(n);
+    }
+    svg.setAttribute("aria-label", `Bilanciamento ${valueText ? valueText.textContent : value} su 10`);
+    tweakGradient(f);
+  };
+
+  // ======= Primo allineamento
+  const initial = (scoreEl?.textContent || "").trim().replace(",", ".");
+  const n = Number(initial);
+  window.updateBalanceGauge(Number.isFinite(n) ? n : 1);
+
+  // ======= Adatta al cambio tema (per avere etichette/tacche leggibili)
+  // In dark mode cambiano i CSS vars → riapplico colori
+  const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
+  function reapplyThemeColors() {
+    const csRe = getComputedStyle(document.body);
+    const ink = csRe.getPropertyValue("--ink").trim() || "#111118";
+    const acc = csRe.getPropertyValue("--accent").trim() || "#4c5fd5";
+    // aggiorna stroke tacche
+    ticksGroup.querySelectorAll("line").forEach(l => l.setAttribute("stroke", ink));
+    // aggiorna gradient
+    stop1.setAttribute("stop-color", acc);
+    stop2.setAttribute("stop-color", acc);
+    // aggiorna glow
+    svg.querySelector("#gaugeGlow feDropShadow")?.setAttribute("flood-color", acc);
+  }
+  mq?.addEventListener?.("change", reapplyThemeColors);
+  // anche quando cambi tema con il toggle
+  document.getElementById("themeToggle")?.addEventListener("click", () => {
+    // attendo il repaint delle CSS vars
+    setTimeout(reapplyThemeColors, 10);
+  });
+})();
+</script>
+
     <script type="module" src="app.js"></script>
    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
