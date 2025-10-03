@@ -51,6 +51,7 @@ body {
   padding: 2.5rem 1.2rem 4rem;
 }
 
+/* HERO centrato (logo + tagline + azioni) */
 .hero {
   display: flex;
   flex-direction: column;
@@ -77,6 +78,7 @@ body {
   max-width: 520px;
 }
 
+/* CARD & FORM ELEMENTS */
 .card {
   background: var(--surface);
   border-radius: var(--radius);
@@ -171,6 +173,7 @@ button.ghost-btn {
   border: 1px solid var(--accent-soft);
 }
 
+/* THEME TOGGLE */
 .theme-toggle {
   display: inline-flex;
   align-items: center;
@@ -228,6 +231,7 @@ button.ghost-btn {
   background: var(--accent-soft);
 }
 
+/* SECTION LAYOUTS */
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -398,6 +402,7 @@ footer.microcopy {
   margin-top: 3rem;
 }
 
+/* RESPONSIVE */
 @media (min-width: 720px) {
   .material-row {
     flex-direction: row;
@@ -447,9 +452,11 @@ footer.microcopy {
     align-self: center;
   }
 }
-/* Logo centrato e ben visibile */
+
+/* ====== LOGO & TAGLINE ====== */
 .logo-box{
   display:flex;
+  flex-direction: column;
   justify-content:center;
   align-items:center;
   margin-bottom:1.5rem;
@@ -457,22 +464,30 @@ footer.microcopy {
 }
 
 .site-logo{
-  width: min(60vw, 520px); /* cresce fino a 520px ma non oltre il 60% viewport */
+  width: min(60vw, 520px); /* fino a 520px, ma non oltre 60% viewport */
   height:auto;
   display:block;
   object-fit:contain;
   image-rendering:auto;
+  margin-bottom: 10px;
 }
 
-/* Mobile: un po' più grande rispetto a prima */
+/* Tagline centrata sotto al logo */
+.tagline{
+  margin: 0 auto;
+  max-width: 720px;
+  color: var(--ink-soft);
+  font-size: clamp(0.95rem, 1.6vw, 1.1rem);
+  line-height: 1.6;
+}
+
 @media (max-width:520px){
   .site-logo{
     width: min(78vw, 420px);
   }
 }
 
-/* Dark mode: linee chiare su sfondo scuro */
+/* Dark mode: PNG con linee nere reso visibile su sfondo scuro */
 body[data-theme='dark'] .site-logo{
-  /* Trasforma le linee nere in chiare senza toccare la trasparenza */
   filter: invert(1) grayscale(1) brightness(1.25) contrast(1.05);
 }
