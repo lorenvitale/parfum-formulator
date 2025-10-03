@@ -446,3 +446,27 @@ footer.microcopy {
     align-self: center;
   }
 }
+/* --- Logo sito --- */
+.logo-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;     /* centrato orizzontalmente */
+  text-align: center;      /* testo centrato sotto */
+  margin-bottom: 1.5rem;
+  flex: 1;                 /* occupa lo spazio a sinistra della hero */
+}
+
+.site-logo {
+  max-height: 90px;        /* controlla l’altezza massima */
+  width: auto;             /* mantiene le proporzioni */
+  height: auto;
+  display: block;
+  margin-bottom: 0.6rem;
+  object-fit: contain;     /* non deforma mai */
+}
+
+@media (max-width: 520px) {
+  .site-logo {
+    max-height: 70px;      /* logo più compatto su schermi piccoli */
+  }
+}
