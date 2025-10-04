@@ -657,3 +657,38 @@ html[data-step="5"] .step[data-step="5"] { display: block; }
   gap: .5rem;
   justify-content: center;
 }
+/* Bottoni prev/next disabilitati */
+.stepper-actions button:disabled {
+  opacity: .45;
+  cursor: default;
+  box-shadow: none;
+  transform: none;
+}
+/* Hover/focus sugli step (cliccabili) */
+.stepper-list li {
+  transition: border-color .2s ease, background-color .2s ease, color .2s ease, transform .12s ease;
+}
+.stepper-list li:hover { transform: translateY(-1px); }
+.stepper-list li:active { transform: translateY(0); }
+
+/* Migliora focus da tastiera */
+.stepper-list li:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  border-color: var(--accent);
+  background: var(--surface-elevated);
+}
+/* Fade dolce sugli step mostrati */
+.step {
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity .18s ease, transform .18s ease;
+}
+html[data-step="1"] .step[data-step="1"],
+html[data-step="2"] .step[data-step="2"],
+html[data-step="3"] .step[data-step="3"],
+html[data-step="4"] .step[data-step="4"],
+html[data-step="5"] .step[data-step="5"] {
+  opacity: 1;
+  transform: translateY(0);
+}
