@@ -405,6 +405,77 @@
 </script>
 
     <script type="module" src="app.js"></script>
+    <script>
+(function () {
+  const stepsEls = Array.from(document.querySelectorAll('.step'));
+  const stepperItems = Array.from(document.querySelectorAll('.stepper-list li'));
+  const prevBtn = document.getElementById('prevStep');
+  const nextBtn = document.getElementById('nextStep');
+
+  function clamp(n) { return Math.max(1, Math.min(5, n|0)); }
+  function parseStep() {
+    const m = location.hash.match(/step\/(\d+)/);
+    return clamp(m ? Number(m[1]) : 1);
+  }
+  function goTo(n) { location.hash = `#/step/${clamp(n)}`; }
+
+  function markStepper(n) {
+    stepperItems.forEach(li => li.removeAttribute('aria-current'));
+    const active = stepperItems.find(li => Number(li.dataset.step) === n);
+    active?.setAttribute('aria-current','step');
+  }
+
+  function show(n) {
+    document.documentElement.setAttribute('data-step', String(n));
+    prevBtn.disabled = (n === 1);
+    nextBtn.disabled = (n === 5);
+    markStepper(n);
+  }
+
+  function canLeave(step) {
+    const api = window.__wizardApi;
+    if (!api) return true;
+    if (step === 1) return api.getBatchWeight() > 0;
+    if (step === 2) return (api.state.materials?.length || 0) > 0;
+    return true;
+  }
+
+  function maybeRefresh(n) {
+    const api = window.__wizardApi; if (!api) return;
+    if (n === 3 || n === 4) {
+      api.hydrate();
+      api.updateBatch();
+      api.updateInsights();
+    }
+  }
+
+  stepperItems.forEach(li => {
+    li.addEventListener('click', () => {
+      const target = Number(li.dataset.step);
+      const current = parseStep();
+      if (target <= current || canLeave(current)) goTo(target);
+    });
+  });
+
+  prevBtn?.addEventListener('click', () => goTo(parseStep() - 1));
+  nextBtn?.addEventListener('click', () => {
+    const cur = parseStep();
+    if (canLeave(cur)) goTo(cur + 1);
+  });
+
+  window.addEventListener('hashchange', () => {
+    const n = parseStep();
+    show(n);
+    maybeRefresh(n);
+  });
+
+  if (!location.hash) location.hash = '#/step/1';
+  const start = parseStep();
+  show(start);
+  maybeRefresh(start);
+})();
+</script>
+
    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   const SUPABASE_URL = "https://xbduxfvclbcdezegvpwl.supabase.co";
