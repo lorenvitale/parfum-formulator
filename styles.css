@@ -751,3 +751,92 @@ body[data-theme='dark'] .login-btn:hover {
   color: #fff;
   box-shadow: 0 10px 24px -12px rgba(128, 152, 255, 0.5);
 }
+/* === HERO: allineamento e dimensioni coerenti === */
+/* 1) Mettiamo tutto centrato e su due righe se serve */
+.hero-actions{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
+  flex-wrap: wrap;
+}
+
+/* 2) Stesse altezze per: Login, Nuova formula (ghost), switch tema */
+:root { --btn-h: 44px; } /* altezza pulsanti coerente */
+.hero-actions .login-btn,
+.hero-actions .ghost-btn,
+.hero-actions .theme-toggle{
+  height: var(--btn-h);
+  padding: 0 .95rem;                 /* padding uniforme */
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+  font-size: .95rem;
+}
+
+/* 3) Il pulsante Login/Registrati usa lo stesso “peso” dei primari */
+.hero-actions .login-btn{
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid transparent;
+  box-shadow: 0 14px 26px -20px rgba(76,95,213,.6);
+}
+.hero-actions .login-btn:hover{
+  filter: brightness(1.04);
+  transform: translateY(-1px);
+}
+.hero-actions .login-btn.logout{
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+/* 4) Switch tema con stessa altezza e senza “sballare” il layout */
+.hero-actions .theme-toggle{
+  padding: 0 .6rem;
+}
+.hero-actions .theme-toggle .theme-toggle__track{
+  height: calc(var(--btn-h) - 18px);
+  width: 60px;
+}
+
+/* 5) Su mobile evitiamo pulsanti larghi “a caso” */
+@media (max-width: 520px){
+  .hero-actions .login-btn,
+  .hero-actions .ghost-btn,
+  .hero-actions .theme-toggle{
+    width: auto;     /* non full-width nella hero */
+  }
+}
+
+/* === STEPPER: Indietro/Avanti uguali === */
+.stepper-actions{
+  display: flex;
+  gap: .6rem;
+}
+.stepper-actions button{
+  flex: 1 1 0;        /* stessa larghezza */
+  height: 48px;       /* stessa altezza */
+}
+
+/* opzionale: rendi il ghost (Indietro) ben visibile accanto al primario */
+.stepper-actions .ghost-btn{
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--border);
+}
+.stepper-actions .ghost-btn:hover{
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Dark mode ritocchi */
+body[data-theme='dark'] .hero-actions .login-btn{
+  box-shadow: 0 16px 30px -22px rgba(128,152,255,.55);
+}
+body[data-theme='dark'] .stepper-actions .ghost-btn{
+  background: var(--surface-elevated);
+  border-color: var(--border-strong);
+}
