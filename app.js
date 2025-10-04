@@ -1111,3 +1111,11 @@ init();
     window.updateBalanceGauge?.(n);
   };
 })();
+// === Wizard bridge (usato dal router in index.html) ===
+window.__wizardApi = {
+  hydrate: hydrateStateFromForm,   // rilegge le righe della tabella -> state.materials
+  updateBatch: updateBatchOutputs, // ricalcola ml/gocce/%
+  updateInsights,                  // aggiorna piramide/famiglia/suggerimenti/gauge
+  getBatchWeight,                  // usato per il controllo "puoi lasciare lo step?"
+  state                             // accesso lettura allo stato (materials, formulas, ecc.)
+};
