@@ -123,23 +123,20 @@
         </p>
       </section>
 
-      <!-- 🔹 SEZIONE ANALISI -->
-     <section class="card" id="insightsSection">
-  <h2>Analisi automatica</h2>
-  <div class="insights-grid">
-    <!-- Colonna 1 -->
-    <div>
-      <h3>Piramide olfattiva</h3>
-      <ul id="pyramidList" class="pyramid"></ul>
-    </div>
+      <!-- 🔹 STEP 3 — PIRAMIDE OLFATTIVA -->
+<section class="card step" data-step="3" id="pyramidSection">
+  <h2>Piramide olfattiva</h2>
+  <ul id="pyramidList" class="pyramid"></ul>
+</section>
 
-    <!-- Colonna 2 -->
+<!-- 🔹 STEP 4 — VALUTAZIONE -->
+<section class="card step" data-step="4" id="evaluationSection">
+  <h2>Valutazione</h2>
+  <div class="insights-grid">
     <div>
       <h3>Famiglia predominante</h3>
       <p id="familyBadge" class="badge">-</p>
     </div>
-
-    <!-- Colonna 3 -->
     <div>
       <h3>Bilanciamento</h3>
       <div id="balanceGauge" class="gauge">
@@ -152,14 +149,10 @@
           <g class="gauge-ticks"></g>
           <!-- valore al centro -->
           <text id="gaugeValue" x="100" y="92" text-anchor="middle" class="gauge-value">-</text>
-          
         </svg>
       </div>
-      <!-- retro-compatibilità per app.js -->
       <p id="scoreValue" class="score" style="display:none">-</p>
     </div>
-
-    <!-- Colonna 4 -->
     <div>
       <h3>Miglioramenti suggeriti</h3>
       <ul id="improvementList" class="suggestions"></ul>
@@ -167,32 +160,35 @@
   </div>
 </section>
 
+      <!-- 🔹 STEP 5 — SALVATAGGIO & EXPORT (contenitore unico) -->
+<section class="step" data-step="5" id="finalStep">
 
-      <!-- 🔹 SEZIONE BIBLIOTECA -->
-      <section class="card private" id="librarySection">
-        <div class="section-header">
-          <h2>Biblioteca formule</h2>
-          <div class="section-actions private">
-            <button id="saveFormulaBtn" type="button">Salva formula</button>
-            <button id="exportFormulaBtn" class="ghost-btn" type="button">Esporta JSON</button>
-          </div>
-        </div>
-        <div id="libraryList" class="library"></div>
-      </section>
+  <!-- 🔹 SEZIONE BIBLIOTECA -->
+  <section class="card private" id="librarySection">
+    <div class="section-header">
+      <h2>Biblioteca formule</h2>
+      <div class="section-actions private">
+        <button id="saveFormulaBtn" type="button">Salva formula</button>
+        <button id="exportFormulaBtn" class="ghost-btn" type="button">Esporta JSON</button>
+      </div>
+    </div>
+    <div id="libraryList" class="library"></div>
+  </section>
 
-      <!-- 🔹 SEZIONE EXPORT -->
-      <section class="card export-card" id="exportSection">
-        <h2>Esporta report</h2>
-        <p class="microcopy">
-          Scarica una copia strutturata della formula corrente per condividerla con il tuo team
-          o archiviarla offline.
-        </p>
-        <div class="export-actions">
-          <button id="exportExcelBtn" type="button">Esporta Excel</button>
-          <button id="exportPdfBtn" class="ghost-btn" type="button">Esporta PDF</button>
-        </div>
-      </section>
+  <!-- 🔹 SEZIONE EXPORT -->
+  <section class="card export-card" id="exportSection">
+    <h2>Esporta report</h2>
+    <p class="microcopy">
+      Scarica una copia strutturata della formula corrente per condividerla con il tuo team
+      o archiviarla offline.
+    </p>
+    <div class="export-actions">
+      <button id="exportExcelBtn" type="button">Esporta Excel</button>
+      <button id="exportPdfBtn" class="ghost-btn" type="button">Esporta PDF</button>
+    </div>
+  </section>
 
+</section>
       <footer class="microcopy">
         I dati restano sul tuo dispositivo (localStorage). Esporta per condividere o archiviare.
       </footer>
