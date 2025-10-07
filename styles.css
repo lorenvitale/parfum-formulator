@@ -156,6 +156,18 @@ button {
     color 0.3s ease, border-color 0.3s ease;
 }
 
+/* Allineamento corretto per il pulsante Login / Registrati */
+.hero-actions .login-btn,
+#loginLink {
+  display: inline-flex;
+  align-items: center;       /* centra verticalmente il testo */
+  justify-content: center;   /* centra orizzontalmente */
+  line-height: 1;            /* elimina dislivelli */
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  font-weight: 600;
+}
+
 button:active {
   transform: scale(0.98);
 }
