@@ -23,42 +23,38 @@
     </p>
   </div>
   <div class="hero-actions">
-       <!-- 🔹 LOGIN/LOGOUT PATCH -->
-<div class="auth-buttons">
+  <!-- ➕ AGGIUNTA -->
+  <button id="importBtn" class="ghost-btn" type="button">Importa ricetta</button>
+  <input id="importFile" type="file" accept="application/json,.json" style="display:none;" />
+  <!-- 🔹 LOGIN/LOGOUT PATCH -->
   <a
     id="loginLink"
-    class="login-btn"
+    class="ghost-btn"
     href="./cloud/auth.html?return=https%3A%2F%2Florenvitale.github.io%2Fparfum-formulator%2F"
   >
-    <span class="icon">👤</span>
-    <span class="label">Login / Registrati</span>
+    Login / Registrati
   </a>
-
   <span id="userBox" class="microcopy" style="display:none;"></span>
+  <button id="logoutBtn" class="ghost-btn" type="button" style="display:none;">Logout</button>
 
-  <button id="logoutBtn" class="login-btn logout" type="button" style="display:none;">
-    <span class="icon">🚪</span>
-    <span class="label">Logout</span>
+  <!-- 🔹 BOTTONI ORIGINALI -->
+  <button id="newFormulaBtn" class="ghost-btn" type="button">Nuova formula</button>
+  <button
+    id="themeToggle"
+    class="theme-toggle"
+    type="button"
+    role="switch"
+    aria-checked="false"
+    aria-label="Attiva modalità scura"
+  >
+    <span class="theme-toggle__icon" data-icon="sun" aria-hidden="true">☀️</span>
+    <span class="theme-toggle__track" aria-hidden="true">
+      <span class="theme-toggle__thumb"></span>
+    </span>
+    <span class="theme-toggle__icon" data-icon="moon" aria-hidden="true">🌙</span>
   </button>
 </div>
 
-    <!-- 🔹 BOTTONI ORIGINALI -->
-          <button id="newFormulaBtn" class="ghost-btn" type="button">Nuova formula</button>
-          <button
-            id="themeToggle"
-            class="theme-toggle"
-            type="button"
-            role="switch"
-            aria-checked="false"
-            aria-label="Attiva modalità scura"
-          >
-            <span class="theme-toggle__icon" data-icon="sun" aria-hidden="true">☀️</span>
-            <span class="theme-toggle__track" aria-hidden="true">
-              <span class="theme-toggle__thumb"></span>
-            </span>
-            <span class="theme-toggle__icon" data-icon="moon" aria-hidden="true">🌙</span>
-          </button>
-        </div>
       </header>
       <!-- 🔹 WIZARD STEPPER -->
 <nav class="stepper">
