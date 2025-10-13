@@ -120,6 +120,7 @@
         <div class="section-header">
           <h2>Materie Prime</h2>
           <div class="section-actions">
+            <button id="browseCatalogBtn" type="button" class="ghost-btn">Sfoglia catalogo</button>
             <button id="addMaterialBtn" type="button">Aggiungi nota</button>
             <button id="clearMaterialsBtn" class="ghost-btn" type="button">Svuota</button>
           </div>
@@ -200,6 +201,33 @@
       <footer class="microcopy">
         I dati restano sul tuo dispositivo (localStorage). Esporta per condividere o archiviare.
       </footer>
+      <!-- Modal Catalogo Master -->
+<div id="catalogModal" class="modal" aria-hidden="true">
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="catalogTitle">
+    <header class="modal__header">
+      <h3 id="catalogTitle">Catalogo materie prime</h3>
+      <button type="button" class="icon-btn" id="catalogCloseBtn" aria-label="Chiudi">✕</button>
+    </header>
+    <div class="modal__toolbar">
+      <input id="catalogSearch" type="search" placeholder="Cerca nome o famiglia…" />
+      <select id="catalogGroup">
+        <option value="">Tutti i gruppi</option>
+        <option>Olio essenziale</option>
+        <option>Assoluta</option>
+        <option>CO2</option>
+        <option>Tintura</option>
+        <option>Burro/Cera</option>
+        <option>Acqua aromatica</option>
+        <option>Solvente</option>
+      </select>
+    </div>
+    <div id="catalogList" class="modal__list"></div>
+    <footer class="modal__footer">
+      <button type="button" class="ghost-btn" id="catalogCloseBtn2">Chiudi</button>
+    </footer>
+  </div>
+</div>
+
     </main>
 
     <!-- 🔹 TEMPLATE -->
