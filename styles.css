@@ -852,3 +852,58 @@ body[data-theme='dark'] .stepper-actions .ghost-btn{
   background: var(--surface-elevated);
   border-color: var(--border-strong);
 }
+/* ===== Modal Catalogo ===== */
+.modal {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.35);
+  display: none;
+  align-items: center; justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+.modal[aria-hidden="false"] { display: flex; }
+
+.modal__dialog {
+  width: min(920px, 96vw);
+  max-height: 86vh;
+  overflow: hidden;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+}
+
+.modal__header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 1rem .5rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.modal__toolbar {
+  display: flex; gap: .6rem; padding: .8rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.modal__toolbar input[type="search"],
+.modal__toolbar select {
+  flex: 1;
+}
+
+.modal__list {
+  overflow: auto; padding: 1rem;
+  display: grid; gap: .6rem;
+}
+.catalog-item {
+  display: grid; grid-template-columns: 1fr auto;
+  gap: .6rem; align-items: center;
+  padding: .7rem .9rem; border: 1px solid var(--border);
+  border-radius: 12px; background: var(--surface-subtle);
+}
+.catalog-item__meta { font-size: .85rem; color: var(--ink-soft); }
+.catalog-item__name { font-weight: 600; }
+
+.modal__footer {
+  padding: .8rem 1rem; border-top: 1px solid var(--border);
+  display: flex; justify-content: flex-end; gap: .5rem;
+}
