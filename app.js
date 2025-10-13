@@ -1265,6 +1265,22 @@ init();
     window.updateBalanceGauge?.(n);
   };
 })();
+
+/* === DRAG & DROP IMPORT JSON === */
+const hero = document.querySelector('.hero');
+if (hero) {
+  ['dragenter','dragover'].forEach(ev =>
+    hero.addEventListener(ev, e => { e.preventDefault(); hero.classList.add('drop-ready'); })
+  );
+  ['dragleave','drop'].forEach(ev =>
+    hero.addEventListener(ev, e => { e.preventDefault(); hero.classList.remove('drop-ready'); })
+  );
+  hero.addEventListener('drop', e => {
+    const file = e.dataTransfer?.files?.[0];
+    if (file && /\.json$/i.test(file.name)) handleImportFile(file);
+  });
+}
+
 // === Wizard bridge (usato dal router in index.html) ===
 window.__wizardApi = {
   hydrate: hydrateStateFromForm,   // rilegge le righe della tabella -> state.materials
