@@ -1,4 +1,6 @@
 import { NOTES_DATA, OLFACTIVE_FAMILIES, DEFAULT_PYRAMID } from './assets/notes-data.js';
+import { MASTER_LIBRARY } from './assets/library-data.js';
+
 
 const materialsTable = document.getElementById('materialsTable');
 const materialTemplate = document.getElementById('materialRowTemplate');
@@ -22,6 +24,13 @@ const newFormulaBtn = document.getElementById('newFormulaBtn');
 const themeToggle = document.getElementById('themeToggle');
 const formulaNameInput = document.getElementById('formulaName');
 const formulaTypeSelect = document.getElementById('formulaType');
+const browseCatalogBtn = document.getElementById('browseCatalogBtn');
+const catalogModal   = document.getElementById('catalogModal');
+const catalogCloseBtn = document.getElementById('catalogCloseBtn');
+const catalogCloseBtn2 = document.getElementById('catalogCloseBtn2');
+const catalogSearch  = document.getElementById('catalogSearch');
+const catalogGroup   = document.getElementById('catalogGroup');
+const catalogList    = document.getElementById('catalogList');
 
 const DROPS_PER_ML = 20;
 const STORAGE_KEY = 'parfum-formulator__formulas';
@@ -216,6 +225,75 @@ function loadNoteLibrary() {
     fragment.appendChild(option);
   });
   noteLibrary.appendChild(fragment);
+}
+/* === MODAL CATALOGO MATERIE PRIME === */
+
+function openCatalog() {
+  catalogModal?.setAttribute('aria-hidden', 'false');
+  catalogSearch.value = '';
+  catalogGroup.value = '';
+  renderCatalog();
+  setTimeout(() => catalogSearch.focus(), 50);
+}
+
+function closeCatalog() {
+  catalogModal?.setAttribute('aria-hidden', 'true');
+}
+
+function renderCatalog() {
+  if (!catalogList) return;
+  const q = (catalogSearch.value || '').trim().toLowerCase();
+  const grp = (catalogGroup.value || '').trim().toLowerCase();
+
+  const rows = MASTER_LIBRARY.filter(item => {
+    const hitText =
+      item.name.toLowerCase().includes(q) ||
+      (item.families || []).some(f => f.toLowerCase().includes(q));
+    const hitGroup = !grp || (item.group || '').toLowerCase() === grp;
+    return hitText && hitGroup;
+  });
+
+  catalogList.innerHTML = '';
+  if (!rows.length) {
+    const p = document.createElement('p');
+    p.className = 'microcopy';
+    p.textContent = 'Nessun risultato.';
+    catalogList.appendChild(p);
+    return;
+  }
+
+  const frag = document.createDocumentFragment();
+  rows.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'catalog-item';
+
+    const info = document.createElement('div');
+    const title = document.createElement('div');
+    title.className = 'catalog-item__name';
+    title.textContent = item.name;
+
+    const meta = document.createElement('div');
+    meta.className = 'catalog-item__meta';
+    const fam = (item.families || []).join(' · ') || '—';
+    const pyr = (item.pyramid || []).join(' · ') || '—';
+    meta.textContent = `${item.group || '—'} · Famiglie: ${fam} · Piramide: ${pyr}`;
+
+    info.appendChild(title);
+    info.appendChild(meta);
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = 'Aggiungi';
+    btn.addEventListener('click', () => {
+      addMaterial(item.name);  // funzione già esistente
+      closeCatalog();
+    });
+
+    card.appendChild(info);
+    card.appendChild(btn);
+    frag.appendChild(card);
+  });
+  catalogList.appendChild(frag);
 }
 
 function createMaterialRow(material) {
@@ -1067,6 +1145,17 @@ function initEvents() {
   exportExcelBtn.addEventListener('click', exportFormulaExcel);
   exportPdfBtn.addEventListener('click', exportFormulaPdf);
   newFormulaBtn.addEventListener('click', resetFormula);
+
+    // === Catalogo Materie Prime ===
+  browseCatalogBtn?.addEventListener('click', openCatalog);
+  catalogCloseBtn?.addEventListener('click', closeCatalog);
+  catalogCloseBtn2?.addEventListener('click', closeCatalog);
+  catalogModal?.addEventListener('click', (e) => {
+    if (e.target === catalogModal) closeCatalog(); // click su overlay
+  });
+  catalogSearch?.addEventListener('input', renderCatalog);
+  catalogGroup?.addEventListener('change', renderCatalog);
+
 }
 
 function init() {
