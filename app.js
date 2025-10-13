@@ -31,6 +31,9 @@ const catalogCloseBtn2 = document.getElementById('catalogCloseBtn2');
 const catalogSearch  = document.getElementById('catalogSearch');
 const catalogGroup   = document.getElementById('catalogGroup');
 const catalogList    = document.getElementById('catalogList');
+const importBtn  = document.getElementById('importBtn');
+const importFile = document.getElementById('importFile');
+
 
 const DROPS_PER_ML = 20;
 const STORAGE_KEY = 'parfum-formulator__formulas';
@@ -168,6 +171,65 @@ function downloadFile(blob, filename) {
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+/* === IMPORT RICETTA JSON === */
+function validateImportedFormula(obj) {
+  if (!obj || typeof obj !== 'object') throw new Error('JSON non valido.');
+  if (!Array.isArray(obj.materials)) obj.materials = [];
+  obj.name = String(obj.name || 'Formula importata');
+  obj.type = String(obj.type || 'EDP');
+  obj.batchWeight = Number(obj.batchWeight || 100);
+  obj.density = Number(obj.density || 0.94);
+  obj.materials = obj.materials.map((m, i) => ({
+    note: String(m?.note || `Nota ${i + 1}`),
+    grams: Number(m?.grams || 0),
+    ml: Number(m?.ml || 0),
+    drops: Number(m?.drops || 0),
+    percent: Number(m?.percent || 0),
+    dilution: Number.isFinite(Number(m?.dilution)) ? Number(m.dilution) : 100
+  }));
+  return obj;
+}
+
+function applyImportedFormula(data) {
+  const f = validateImportedFormula(data);
+  formulaNameInput.value = f.name;
+  formulaTypeSelect.value = f.type;
+  batchWeightInput.value = f.batchWeight;
+  densityInput.value = f.density;
+  materialsTable.innerHTML = '';
+  state.materials = f.materials.map(m => ({
+    id: uid(),
+    ...recalcMaterial({
+      id: 'tmp', note: m.note, grams: m.grams, ml: m.ml, drops: m.drops,
+      percent: m.percent, dilution: m.dilution
+    }, 'sync')
+  }));
+  state.materials.forEach(createMaterialRow);
+  updateBatchOutputs();
+  updateInsights();
+  location.hash = '#/step/2';
+}
+
+function handleImportFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const json = JSON.parse(reader.result);
+      applyImportedFormula(json);
+    } catch (err) {
+      alert('Errore durante l’import: ' + (err?.message || 'file non valido'));
+    } finally {
+      importFile.value = '';
+    }
+  };
+  reader.onerror = () => {
+    alert('Impossibile leggere il file selezionato.');
+    importFile.value = '';
+  };
+  reader.readAsText(file, 'utf-8');
 }
 
 function buildNoteCatalog(notes) {
@@ -1155,6 +1217,9 @@ function initEvents() {
   });
   catalogSearch?.addEventListener('input', renderCatalog);
   catalogGroup?.addEventListener('change', renderCatalog);
+    // === Import JSON ===
+  importBtn?.addEventListener('click', () => importFile?.click());
+  importFile?.addEventListener('change', (e) => handleImportFile(e.target.files?.[0]));
 
 }
 
