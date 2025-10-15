@@ -204,5 +204,13 @@ export const MASTER_LIBRARY = [
 { name: "Benzoino del Sumatra", group: "Balsamica", families: ["Balsamica", "Affumicata", "Legnosa"], pyramid: ["Base"] },
 { name: "Benzoino Tolu", group: "Balsamica", families: ["Balsamica", "Speziata", "Dolce"], pyramid: ["Base"] },
 { name: "Benzoino Storace", group: "Balsamica", families: ["Balsamica", "Animalica", "Affumicata"], pyramid: ["Base"] }
+{ name: "Beta Ionone", group: "Fiorita", families: ["Fiorita", "Legnosa", "Fruttata"], pyramid: ["Cuore"] },
+{ name: "Gamma Ionone", group: "Fiorita", families: ["Fiorita", "Fruttata", "Polverosa"], pyramid: ["Cuore"] },
+{ name: "Delta Ionone", group: "Fiorita", families: ["Fiorita", "Legnosa", "Ambrata"], pyramid: ["Cuore"] },
+{ name: "Methyl Ionone", group: "Fiorita", families: ["Fiorita", "Legnosa", "Ambrata"], pyramid: ["Cuore"] },
+{ name: "Methyl Ionone Gamma", group: "Fiorita", families: ["Fiorita", "Polverosa", "Legnosa"], pyramid: ["Cuore"] },
+{ name: "Iso Methyl Ionone", group: "Fiorita", families: ["Fiorita", "Ambrata", "Legnosa"], pyramid: ["Cuore"] },
+{ name: "Dihydro Ionone", group: "Fiorita", families: ["Fiorita", "Verde", "Legnosa"], pyramid: ["Cuore"] },
+{ name: "Vetyl Ionone", group: "Legnosa", families: ["Legnosa", "Fiorita", "Ambrata"], pyramid: ["Cuore"] }
 
 ];
