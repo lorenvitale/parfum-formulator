@@ -53,6 +53,13 @@ const importFile          = document.getElementById('importFile');         // he
 const importRecipeBtn     = document.getElementById('importRecipeBtn');    // in scheda materiali
 const importRecipeInput   = document.getElementById('importRecipeInput');  // in scheda materiali
 
+const requestNotesCta      = document.getElementById('requestNotesCta');
+const requestNotesForm     = document.getElementById('requestNotesForm');
+const requestNotesInput    = document.getElementById('requestNotesInput');
+const requestNotesSend     = document.getElementById('requestNotesSend');
+const requestNotesFeedback = document.getElementById('requestNotesFeedback');
+
+
 /* ======= Costanti & stato ======= */
 const DROPS_PER_ML       = 20;
 const STORAGE_KEY        = 'parfum-formulator__formulas';
@@ -224,6 +231,23 @@ function getMaterialProfile(noteName) {
       pyramid:  Array.isArray(libHit.pyramid)  && libHit.pyramid.length  ? libHit.pyramid  : ['Cuore']
     };
   }
+  /* === UNMAPPED (note non in libreria) === */
+function isUnmappedNote(note) {
+  if (!note) return false;
+  const prof = getMaterialProfile(note);
+  return !prof || !prof.families || !prof.families.length || prof.families[0] === 'Custom';
+}
+
+function applyUnmappedStyle(rowEl, note) {
+  const unmapped = isUnmappedNote(note);
+  rowEl.classList.toggle('is-unmapped', unmapped);
+  const input = rowEl.querySelector('.note-input');
+  if (input) {
+    input.setAttribute('aria-invalid', unmapped ? 'true' : 'false');
+    input.title = unmapped ? 'Nota non presente a catalogo (verrà stimata)' : '';
+  }
+}
+
 
   // 3) Fuzzy: contiene / alias semplici
   const containsHit = MASTER_LIBRARY.find(it => normaliseName(it.name).includes(normalised) || normaliseName(noteName).includes(normaliseName(it.name)));
@@ -241,6 +265,23 @@ function getMaterialProfile(noteName) {
 
   // 5) Default totale
   return { name: noteName, families: ['Custom'], pyramid: ['Cuore'] };
+}
+/* === UNMAPPED (note non in libreria) === */
+function isUnmappedNote(note) {
+  if (!note) return false;
+  const prof = getMaterialProfile(note);
+  // Considero "unmapped" quando il profilo non esiste o è marcato Custom
+  return !prof || !prof.families || !prof.families.length || prof.families[0] === 'Custom';
+}
+
+function applyUnmappedStyle(rowEl, note) {
+  const unmapped = isUnmappedNote(note);
+  rowEl.classList.toggle('is-unmapped', unmapped);
+  const input = rowEl.querySelector('.note-input');
+  if (input) {
+    input.setAttribute('aria-invalid', unmapped ? 'true' : 'false');
+    input.title = unmapped ? 'Nota non presente a catalogo (verrà stimata)' : '';
+  }
 }
 
 /* ======= Material calc ======= */
@@ -302,9 +343,12 @@ function createMaterialRow(material) {
   const dilutionInput = clone.querySelector('.dilution-input');
   const removeBtn     = clone.querySelector('.remove-btn');
 
+  applyUnmappedStyle(clone, material.note);
+
   noteInput.addEventListener('input', (e) => {
     if (syncing) return;
     updateMaterial(material.id, { note: e.target.value });
+    applyUnmappedStyle(clone, event.target.value);
   });
   gramsInput.addEventListener('input', (e) => {
     if (syncing) return;
@@ -351,6 +395,8 @@ function syncMaterialRow(id) {
   if (document.activeElement !== dropsInput)    dropsInput.value    = material.drops ? Math.round(material.drops)  : '';
   if (document.activeElement !== percentInput)  percentInput.value  = material.percent ? material.percent.toFixed(2): '';
   if (document.activeElement !== dilutionInput) dilutionInput.value = material.dilution ?? 100;
+
+  applyUnmappedStyle(row, material.note);
   syncing = false;
 }
 
@@ -1071,6 +1117,42 @@ function initEvents() {
   importFile?.addEventListener('change', (e) => {
     handleImportFile(e.target.files?.[0]);
     e.target.value = '';
+
+    // === CTA mancano note ===
+requestNotesCta?.addEventListener('click', () => {
+  const isHidden = requestNotesForm?.hasAttribute('hidden');
+  if (isHidden) {
+    requestNotesForm?.removeAttribute('hidden');
+    requestNotesInput?.focus();
+  } else {
+    requestNotesForm?.setAttribute('hidden', '');
+  }
+});
+
+requestNotesSend?.addEventListener('click', () => {
+  const text = (requestNotesInput?.value || '').trim();
+  if (!text) {
+    requestNotesFeedback.textContent = 'Scrivi almeno una nota.';
+    return;
+  }
+
+  // 1) salvo localmente una coda (ti torna utile per inviarla più avanti)
+  try {
+    const key = 'parfum-formulator__missingNotes';
+    const prev = JSON.parse(localStorage.getItem(key) || '[]');
+    prev.push({ text, at: new Date().toISOString() });
+    localStorage.setItem(key, JSON.stringify(prev));
+  } catch {}
+
+  // 2) apro un'email precompilata (se vuoi cambiare indirizzo, fallo qui)
+  const mailto = `mailto:info@tua-mail.it?subject=${encodeURIComponent('Richiesta nuove note')}&body=${encodeURIComponent(text)}`;
+  window.location.href = mailto;
+
+  // 3) feedback UI
+  requestNotesFeedback.textContent = 'Grazie! Aprirà il tuo client email con il testo precompilato.';
+  requestNotesInput.value = '';
+});
+
   });
 
   // Import (scheda materiali)
