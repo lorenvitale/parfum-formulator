@@ -199,5 +199,10 @@ export const MASTER_LIBRARY = [
 { name: "Pepe Verde", group: "Speziata", families: ["Speziata", "Verde"], pyramid: ["Testa"] },
 { name: "Norlimbanol", group: "Legnosa", families: ["Legnosa", "Ambrata", "Secca"], pyramid: ["Base"] },
 { name: "Alfa Ionone", group: "Fiorita", families: ["Fiorita", "Legnosa", "Polverosa"], pyramid: ["Cuore"] }
+{ name: "Benzoino del Siam", group: "Balsamica", families: ["Balsamica", "Dolce", "Ambrata"], pyramid: ["Base"] },
+{ name: "Benzoino del Laos", group: "Balsamica", families: ["Balsamica", "Vanigliata", "Resinosa"], pyramid: ["Base"] },
+{ name: "Benzoino del Sumatra", group: "Balsamica", families: ["Balsamica", "Affumicata", "Legnosa"], pyramid: ["Base"] },
+{ name: "Benzoino Tolu", group: "Balsamica", families: ["Balsamica", "Speziata", "Dolce"], pyramid: ["Base"] },
+{ name: "Benzoino Storace", group: "Balsamica", families: ["Balsamica", "Animalica", "Affumicata"], pyramid: ["Base"] }
 
 ];
