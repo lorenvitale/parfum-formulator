@@ -919,3 +919,33 @@ body[data-theme='dark'] .stepper-actions .ghost-btn{
   outline: none;
   box-shadow: 0 0 0 3px rgba(229,72,77,0.25);
 }
+.missing-notes {
+  margin-top: 24px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line, #e5e7f0);
+}
+
+.ghost-btn.small {
+  font-size: .875rem;
+  padding: 6px 10px;
+}
+
+.missing-notes__form {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+#requestNotesInput {
+  flex: 1 1 320px;
+  min-width: 240px;
+  padding: 8px 10px;
+  border: 1px solid #ccd2e3;
+  border-radius: 8px;
+}
+
+#requestNotesSend {
+  padding: 8px 12px;
+}
