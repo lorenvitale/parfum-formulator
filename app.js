@@ -66,7 +66,6 @@ const DROPS_PER_ML       = 20;
 const STORAGE_KEY        = 'parfum-formulator__formulas';
 const THEME_STORAGE_KEY  = 'parfum-formulator__theme';
 
-const { index: NOTE_INDEX, list: NOTE_LIBRARY } = buildNoteCatalog(NOTES_DATA);
 const DEFAULT_LEVELS     = DEFAULT_PYRAMID;
 
 const themeMediaQuery =
