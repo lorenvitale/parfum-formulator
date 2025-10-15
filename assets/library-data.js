@@ -25,7 +25,7 @@ export const MASTER_LIBRARY = [
   { name: "Etanolo 96°", group: "Solvente", families: ["Pulita","Moderna"], pyramid: ["Testa","Fondo"] },
   { name: "DPG", group: "Solvente", families: ["Pulita"], pyramid: ["Fondo"] },
 
-  { name: "Tintura di legno di carrubo", group: "Tintura", families: ["Legnosa", "Balsamica"], pyramid: ["Fondo"] },
+{ name: "Tintura di legno di carrubo", group: "Tintura", families: ["Legnosa", "Balsamica"], pyramid: ["Fondo"] },
 { name: "Tintura di foglie di noce", group: "Tintura", families: ["Verde", "Erbacea"], pyramid: ["Cuore", "Fondo"] },
 { name: "Helional", group: "Sintetico", families: ["Fiorita", "Aldeidica", "Marina"], pyramid: ["Testa", "Cuore"] },
 { name: "Indolo", group: "Sintetico", families: ["Animalica", "Fiorita"], pyramid: ["Fondo"] },
