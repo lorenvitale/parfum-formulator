@@ -197,5 +197,7 @@ export const MASTER_LIBRARY = [
 { name: "Burro", group: "Accordo", families: ["Gourmand", "Lattata"], pyramid: ["Fondo"] },
 { name: "Pepe Bianco", group: "Speziata", families: ["Speziata", "Fresca"], pyramid: ["Testa"] },
 { name: "Pepe Verde", group: "Speziata", families: ["Speziata", "Verde"], pyramid: ["Testa"] },
+{ name: "Norlimbanol", group: "Legnosa", families: ["Legnosa", "Ambrata", "Secca"], pyramid: ["Base"] },
+{ name: "Alfa Ionone", group: "Fiorita", families: ["Fiorita", "Legnosa", "Polverosa"], pyramid: ["Cuore"] }
 
 ];
