@@ -63,6 +63,12 @@ const concentrateHelp     = document.getElementById('concentrateHelp');
 const DROPS_PER_ML       = 20;
 const STORAGE_KEY        = 'parfum-formulator__formulas';
 const THEME_STORAGE_KEY  = 'parfum-formulator__theme';
+// === MINI AI CONFIG ===
+const AI_CONF = {
+  ENABLED: true,
+  ACCEPT_THRESHOLD: 0.72,   // sopra => usiamo la stima nei calcoli
+  SHOW_BADGE_UNDER: 0.9     // sotto => mostra il badge "AI" sulla riga
+};
 const { index: NOTE_INDEX, list: NOTE_LIBRARY } = buildNoteCatalog(NOTES_DATA);
 const DEFAULT_LEVELS     = DEFAULT_PYRAMID;
 
@@ -217,11 +223,81 @@ function buildNoteCatalog(notes) {
   });
   list.sort((a, b) => a.name.localeCompare(b.name, 'it'));
   return { index, list };
-}
+  }
+// === MINI AI UTILS (no dipendenze esterne) ===
+function norm(s=''){ return s.toLowerCase().normalize('NFKD').replace(/\p{Diacritic}/gu,'').replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim(); }
+function trigrams(s){ const t=[]; const x='  '+s+'  '; for(let i=0;i<x.length-2;i++) t.push(x.slice(i,i+3)); return t; }
+function vecFromTrigrams(s){ const v=new Map(); trigrams(s).forEach(g=>v.set(g,(v.get(g)||0)+1)); return v; }
+function dot(a,b){ let s=0; const [S,L]=a.size<b.size?[a,b]:[b,a]; S.forEach((va,k)=>{ const vb=L.get(k)||0; s+=va*vb; }); return s; }
+function norm2(a){ let s=0; a.forEach(v=>{s+=v*v}); return Math.sqrt(s); }
+function cosine(a,b){ const d=dot(a,b); const na=norm2(a), nb=norm2(b); return (na&&nb)? d/(na*nb) : 0; }
 
-function getMaterialProfile(noteName) {
-  const normalised = normaliseName(noteName);
-  return NOTE_INDEX.get(normalised) || null;
+// Lessico rapido per indizi (puoi estenderlo liberamente)
+const AI_LEXICON = [
+  {re:/\b(bergamotto|limone|pompelmo|arancia|mandarino)\b/i, fam:'Agrumata',  lev:'Testa'},
+  {re:/\b(lavanda|rosa|gelsomino|ylang|violetta)\b/i,        fam:'Floreale', lev:'Cuore'},
+  {re:/\b(legno|cedro|sandalo|vetiver|patchouli|oud)\b/i,    fam:'Legnosa',  lev:'Fondo'},
+  {re:/\b(ambra|vaniglia|fava tonka|balsam|resina)\b/i,      fam:'Ambrata',  lev:'Fondo'},
+  {re:/\b(muschio|musk)\b/i,                                 fam:'Muscata',  lev:'Fondo'},
+  {re:/\b(spezie?|pepe|cannella|cardamomo|chiodi)\b/i,       fam:'Speziata', lev:'Cuore'},
+  {re:/\b(marino|ozon|acquatico)\b/i,                        fam:'Acquatica',lev:'Testa'},
+  {re:/\b(frutt|pera|mela|frutti di bosco|pesca)\b/i,        fam:'Fruttata', lev:'Testa'}
+];
+
+
+// === PROFILE CON AI FALLBACK ===
+function getMaterialProfile(noteName){
+  const n = normaliseName(noteName);
+  if (!n) return null;
+
+  // 1) catalogo diretto
+  const direct = NOTE_INDEX.get(n);
+  if (direct) return {...direct, _ai:false, _conf:1};
+
+  if (!AI_CONF.ENABLED) return null;
+
+  // 2) lessico: se colpisce, grande boost
+  let hintFam=null, hintLev=null, hintScore=0;
+  for (const rule of AI_LEXICON){
+    if (rule.re.test(noteName)){
+      hintFam = rule.fam; hintLev = rule.lev; hintScore = 0.35;
+      break;
+    }
+  }
+
+  // 3) nearest neighbor su trigrams
+  const qv = vecFromTrigrams(norm(noteName));
+  let best = {item:null, sim:0};
+  for (const it of AI_KB){
+    const s = cosine(qv, it.v);
+    if (s>best.sim) best = {item:it, sim:s};
+  }
+
+  if (best.item){
+    // Combina NN + hint lessico
+    let conf = best.sim;
+    if (hintScore) conf = Math.min(1, conf + hintScore*(1-conf));
+
+    // Costruisci profilo "stimato"
+    const fam = best.item.families?.[0] || hintFam || 'Custom';
+    const lev = best.item.pyramid?.[0]  || hintLev || 'Cuore';
+
+    return {
+      name: noteName,
+      families: fam==='Custom' && hintFam ? [hintFam] : (fam ? [fam] : ['Custom']),
+      pyramid: lev ? [lev] : ['Cuore'],
+      _ai: true,
+      _conf: conf,
+      _matchedTo: best.item.name
+    };
+  }
+
+  // 4) fallback assoluto
+  if (hintFam || hintLev){
+    return {name: noteName, families:[hintFam||'Custom'], pyramid:[hintLev||'Cuore'], _ai:true, _conf:0.55};
+  }
+
+  return null;
 }
 
 function loadNoteLibrary() {
@@ -235,6 +311,18 @@ function loadNoteLibrary() {
   });
   noteLibrary.appendChild(fragment);
 }
+// === INDICE AI sui nomi noti ===
+let AI_KB = []; // {name, families, pyramid, v:vector}
+function buildAiKb(){
+  AI_KB = NOTE_LIBRARY.map(n=>({
+    name: n.name,
+    families: n.families||[],
+    pyramid: n.pyramid||[],
+    v: vecFromTrigrams(norm(n.name))
+  }));
+}
+buildAiKb();
+
 
 // ====== Batch/densità ======
 function getBatchWeight() {
@@ -319,6 +407,15 @@ function syncMaterialRow(id) {
   if (document.activeElement !== dropsInput)   dropsInput.value   = material.drops ? Math.round(material.drops) : '';
   if (document.activeElement !== percentInput) percentInput.value = material.percent ? material.percent.toFixed(2) : '';
   if (document.activeElement !== dilutionInput)dilutionInput.value= material.dilution ?? 100;
+  // === badge AI sotto nota se generato automaticamente ===
+const noteLabel = row.querySelector('.note-input');
+if (material._ai && material._conf < AI_CONF.SHOW_BADGE_UNDER) {
+  noteLabel.title = `AI match ${Math.round(material._conf * 100)}% → ${material._matchedTo || ''}`;
+  noteLabel.style.background = 'linear-gradient(90deg, rgba(76,95,213,0.15), transparent 80%)';
+} else {
+  noteLabel.style.background = '';
+  noteLabel.title = '';
+}
   syncing = false;
 }
 
@@ -438,30 +535,92 @@ function updateConcentrateUI() {
   }
 }
 
-// ====== Insights & suggerimenti ======
-function computeInsights() {
+function computeInsights(){
   const batchWeight = getBatchWeight();
-  const totalWeight = state.materials.reduce((sum, it) => sum + it.grams, 0);
+  let totalWeightAll = 0;
+  let totalWeightUsed = 0; // usato nel calcolo (noti + AI sopra soglia)
 
-  const pyramid = new Map(DEFAULT_LEVELS.map((lvl) => [lvl, []]));
+  const pyramid = new Map(DEFAULT_LEVELS.map(l=>[l,[]]));
   const familyWeights = new Map();
+  let unknownCount = 0, aiUsed=0, aiGuessed=0;
 
-  state.materials.forEach((m) => {
-    if (!m.note || m.grams <= 0) return;
+  state.materials.forEach(m=>{
+    const g = Number(m.grams)||0;
+    totalWeightAll += g;
+    if (!m.note || g<=0) return;
+
     const prof = getMaterialProfile(m.note);
-    if (prof) {
-      prof.pyramid.forEach((lvl) => {
-        if (!pyramid.has(lvl)) pyramid.set(lvl, []);
-        pyramid.get(lvl).push(m);
-      });
-      prof.families.forEach((f) => {
-        const cur = familyWeights.get(f) || 0;
-        familyWeights.set(f, cur + m.grams);
-      });
-    } else {
-      pyramid.get('Cuore')?.push(m); // fallback
+    if (!prof){
+      unknownCount++;            // niente profilo
+      return;
     }
+
+    const isAI = !!prof._ai;
+    const conf = Number(prof._conf||0);
+    const accept = !isAI || conf >= AI_CONF.ACCEPT_THRESHOLD;
+
+    if (!accept){
+      // stima debole: non inquina la piramide ma la contiamo come “guessed”
+      aiGuessed++;
+      return;
+    }
+
+    if (isAI) aiUsed++;
+    totalWeightUsed += g;
+
+    (prof.pyramid||['Cuore']).forEach(level=>{
+      if (!pyramid.has(level)) pyramid.set(level,[]);
+      pyramid.get(level).push(m);
+    });
+
+    (prof.families||[]).forEach(f=>{
+      familyWeights.set(f,(familyWeights.get(f)||0)+g);
+    });
   });
+
+  const pyramidData = DEFAULT_LEVELS.map(level=>{
+    const materials = pyramid.get(level)||[];
+    const weight = materials.reduce((s,x)=>s+(Number(x.grams)||0),0);
+    const percentage = totalWeightUsed ? (weight/totalWeightUsed)*100 : 0;
+    const list = materials
+      .slice()
+      .sort((a,b)=>(b.grams||0)-(a.grams||0))
+      .map(item=>`${item.note} (${(item.percent||0).toFixed(1)}%)`);
+    return {level, weight, percentage, list};
+  });
+
+  const sortedFamilies = [...familyWeights.entries()].sort((a,b)=>b[1]-a[1]);
+  const dominantFamily = sortedFamilies[0]?.[0] ?? null;
+
+  const percentSpread = totalWeightUsed
+    ? (()=>{ const vals=pyramidData.map(it=>it.weight/totalWeightUsed); return Math.max(...vals)-Math.min(...vals); })()
+    : 0;
+
+  const balanceScore = totalWeightUsed ? Math.max(0,100 - percentSpread*100) : 0;
+  const rating = totalWeightUsed ? (balanceScore/20).toFixed(1) : '-';
+
+  const suggestions = buildSuggestions({
+    totalWeight: totalWeightAll,
+    pyramidData,
+    dominantFamily,
+    sortedFamilies,
+    batchWeight,
+    unknownCount,
+    aiUsed,
+    aiGuessed
+  });
+
+  return {
+    pyramidData,
+    dominantFamily,
+    rating,
+    score: Math.round(balanceScore),
+    suggestions,
+    totalWeight: totalWeightAll,
+    concentratePercent: batchWeight ? (totalWeightAll/batchWeight)*100 : 0,
+    unknownCount, aiUsed, aiGuessed
+  };
+}
 
   const pyramidData = DEFAULT_LEVELS.map((lvl) => {
     const arr = pyramid.get(lvl) || [];
@@ -499,32 +658,121 @@ function computeInsights() {
 }
 
 function buildSuggestions({ totalWeight, pyramidData, dominantFamily, sortedFamilies, batchWeight }) {
-  const out = [];
+  const suggestions = [];
+  const uniq = (arr) => [...new Set(arr.filter(Boolean))];
+
   if (!totalWeight) {
-    out.push('Aggiungi materie prime per generare una piramide e suggerimenti mirati.');
-    return out;
+    return ['Aggiungi materie prime per generare una piramide e suggerimenti mirati.'];
   }
+
+  // === 1) Rileva note “sconosciute” o stimate dall’AI con bassa confidenza ===
+  try {
+    const unknown = state.materials
+      .filter(m => m.note && !getMaterialProfile(m.note));
+    if (unknown.length) {
+      const names = unknown.slice(0, 6).map(m => m.note).join(' · ');
+      suggestions.push(
+        `Sono presenti note non in libreria: ${names}${unknown.length > 6 ? '…' : ''}. ` +
+        `Apri “Catalogo” per sostituirle o usa “Riconosci note” per un mapping automatico.`
+      );
+    }
+
+    const lowAi = state.materials
+      .filter(m => m._ai && Number(m._conf) < 0.9);
+    if (lowAi.length) {
+      suggestions.push(
+        `Alcune note sono state stimate con confidenza < 90%: ` +
+        `${lowAi.slice(0, 6).map(m => `${m.note} (${Math.round((m._conf || 0)*100)}%)`).join(' · ')}${lowAi.length > 6 ? '…' : ''}. ` +
+        `Verifica manualmente o sostituisci dal catalogo.`
+      );
+    }
+  } catch (_) { /* safe guard */ }
+
+  // === 2) Obiettivi di equilibrio per piramide ===
+  // target indicativi (range %) per ciascun livello
+  const targets = {
+    'Testa': { min: 15, max: 40 },
+    'Cuore': { min: 30, max: 55 },
+    'Fondo': { min: 25, max: 55 }
+  };
+
   pyramidData.forEach(({ level, percentage }) => {
-    if (percentage < 15) out.push(`Valuta di rafforzare la sezione di ${level.toLowerCase()} oltre il 15%.`);
+    const t = targets[level];
+    if (!t) return;
+    if (percentage < t.min) {
+      suggestions.push(`Rafforza le note di ${level.toLowerCase()} fino ad almeno ~${t.min}%.`);
+    } else if (percentage > t.max) {
+      suggestions.push(`Riduci le note di ${level.toLowerCase()} sotto ~${t.max}% per evitare sbilanciamenti.`);
+    }
   });
 
-  if (!dominantFamily) out.push('Seleziona note dal catalogo per ottenere la famiglia olfattiva suggerita.');
-  else out.push(`La famiglia ${dominantFamily} è dominante: mantienila oppure integra famiglie complementari.`);
+  // Extra fine-tuning su volatilità/persistenza
+  const top = pyramidData.find(p => p.level === 'Testa');
+  const heart = pyramidData.find(p => p.level === 'Cuore');
+  const base = pyramidData.find(p => p.level === 'Fondo');
 
-  if (sortedFamilies.length < 2) out.push('Integra una seconda famiglia per ampliare la complessità.');
+  if (top && top.percentage > 45) {
+    suggestions.push('Riduci leggermente le note di testa (>45%) per evitare un’apertura troppo volatile.');
+  }
+  if (base && base.percentage < 20) {
+    suggestions.push('Aumenta le note di fondo (<20%) per migliorare la persistenza.');
+  }
+  if (heart && heart.percentage < 25) {
+    suggestions.push('Aggiungi corpo (cuore <25%) per evitare un “buco” tra apertura e fondo.');
+  }
 
-  const base = pyramidData.find((it) => it.level === 'Fondo');
-  if (base && base.percentage < 25) out.push('Aumenta le note di fondo per una maggiore persistenza sulla pelle.');
+  // === 3) Famiglie olfattive: dominanza e varietà ===
+  if (!dominantFamily) {
+    suggestions.push('Seleziona note dalla libreria per identificare la famiglia olfattiva dominante.');
+  } else {
+    suggestions.push(`Famiglia dominante: ${dominantFamily}. Valuta contrasti o accordi complementari.`);
+  }
+  if (sortedFamilies.length < 2) {
+    suggestions.push('Integra una seconda famiglia per ampliare la complessità e la dinamica del profumo.');
+  } else {
+    const totalFam = sortedFamilies.reduce((s, [, w]) => s + w, 0) || 1;
+    const [topFam, topW] = sortedFamilies[0];
+    if (topW / totalFam > 0.6) {
+      suggestions.push(`La famiglia ${topFam} supera il 60%: valuta di bilanciarla con accordi secondari.`);
+    }
+  }
 
-  const top = pyramidData.find((it) => it.level === 'Testa');
-  if (top && top.percentage > 40) out.push('Riduci leggermente le note di testa per evitare un inizio troppo volatile.');
+  // === 4) Concentrazione consigliata per tipologia ===
+  const type = (typeof formulaTypeSelect !== 'undefined' && formulaTypeSelect?.value) || 'EDP';
+  const totalWeightLocal = totalWeight; // grammi concentrato
+  const batch = Number(batchWeight) || 0.0001;
+  const concentratePercent = (totalWeightLocal / batch) * 100;
 
-  const concentratePercent = batchWeight ? (totalWeight / batchWeight) * 100 : 0;
-  const max = getTypeLimit();
-  if (concentratePercent < 5) out.push('Il concentrato è molto basso: aumenta le materie prime o riduci il solvente.');
-  if (concentratePercent > max) out.push(`Il concentrato (${concentratePercent.toFixed(1)}%) supera il limite per ${formulaTypeSelect.value} (${max}%).`);
+  // Range indicativi (industria) – puoi adattarli:
+  const typeTargets = {
+    'EDC': { min: 2,  max: 5  },
+    'EDT': { min: 8,  max: 15 },
+    'EDP': { min: 15, max: 22 },
+    'PARFUM': { min: 22, max: 35 },
+    'ATTAR': { min: 35, max: 100 }
+  };
+  const tt = typeTargets[type?.toUpperCase()] || typeTargets['EDP'];
 
-  return [...new Set(out)];
+  if (concentratePercent < tt.min) {
+    suggestions.push(`Il concentrato è ${concentratePercent.toFixed(1)}%: per ${type} mira a ≥ ${tt.min}%. Aumenta materie prime o riduci solvente.`);
+  } else if (concentratePercent > tt.max) {
+    suggestions.push(`Il concentrato è ${concentratePercent.toFixed(1)}%: per ${type} resta ≤ ${tt.max}%. Riduci leggermente il concentrato o rivedi il tipo.`);
+  } else {
+    suggestions.push(`Concentrazione ok per ${type} (${concentratePercent.toFixed(1)}% ~ target ${tt.min}–${tt.max}%).`);
+  }
+
+  // === 5) Pulizia & qualità miscela ===
+  // (esempi: tante materie prime con peso irrilevante o diluizioni estreme)
+  const manyTiny = state.materials.filter(m => (Number(m.grams) || 0) > 0 && (m.percent || 0) < 0.3);
+  if (manyTiny.length >= 5) {
+    suggestions.push('Molti ingredienti sotto lo 0,3%: valuta di semplificare per ridurre rumore olfattivo.');
+  }
+  const extremeDil = state.materials.filter(m => Number(m.dilution) > 95).length;
+  if (extremeDil >= 3) {
+    suggestions.push('Più ingredienti >95% di diluizione: verifica l’effettivo contributo olfattivo.');
+  }
+
+  return uniq(suggestions);
 }
 
 function updateInsights() {
