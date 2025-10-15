@@ -3,7 +3,7 @@
 // Campi minimi: name, group; consigliati: families, pyramid.
 export const MASTER_LIBRARY = [
   // Oli essenziali
-  { name: "Lavanda Fine", group: "Olio essenziale", families: ["Aromatica","Fiorita"], pyramid: ["Testa","Cuore"] },
+  { name: "Lavanda EO", group: "Olio essenziale", families: ["Aromatica","Fiorita"], pyramid: ["Testa","Cuore"] },
   { name: "Bergamotto FCF", group: "Olio essenziale", families: ["Agrumata","Aromatica"], pyramid: ["Testa"] },
   { name: "Patchouli", group: "Olio essenziale", families: ["Legnosa","Terrosa"], pyramid: ["Fondo"] },
 
