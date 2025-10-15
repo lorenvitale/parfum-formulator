@@ -223,6 +223,23 @@
     </footer>
   </div>
 </div>
+      <section id="missingNotesBlock" class="missing-notes">
+  <button id="requestNotesCta" type="button" class="ghost-btn small">
+    Non trovi qualche nota? Scrivici e la aggiungeremo nella prossima patch mensile
+  </button>
+
+  <div id="requestNotesForm" class="missing-notes__form" hidden>
+    <input
+      id="requestNotesInput"
+      type="text"
+      placeholder="Scrivi qui le note che ti mancano (separate da virgola)…"
+      autocomplete="off"
+    />
+    <button id="requestNotesSend" type="button">Invia</button>
+    <span id="requestNotesFeedback" class="microcopy" aria-live="polite"></span>
+  </div>
+</section>
+
 
     </main>
 
