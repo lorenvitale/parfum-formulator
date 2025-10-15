@@ -1,22 +1,22 @@
 /* ============================================================================
- * Parfum Formulator — app.js (clean & improved)
+ * Parfum Formulator — app.js (clean & improved, unified catalog)
  * - Tema chiaro/scuro con preferenza persistente
- * - Catalogo note + Master Library (modal) con ricerca/filtri
- * - Import/Export (JSON, “Excel” HTML, PDF)
+ * - Catalogo note (modal) + Autocomplete dallo stesso catalogo (MASTER_LIBRARY)
+ * - Evidenziazione "note non mappate" (is-unmapped)
+ * - CTA richiesta nuove note (footer): "Non trovi qualche nota?"
+ * - Import/Export (JSON, “Excel” HTML, PDF) + Drag & Drop JSON
  * - Ricalcolo batch + sincronizzazione UI
- * - Heuristics per note non presenti a catalogo (family/pyramid guess)
- * - Drag & Drop JSON in hero
- * - Wizard bridge per router
+ * - Heuristics leggere per note fuori catalogo
+ * - Wizard bridge + Gauge bridge
  * ========================================================================== */
 
-// OLFACTIVE_FAMILIES e DEFAULT_PYRAMID restano in notes-data.js, ma NON useremo più NOTES_DATA
 import { OLFACTIVE_FAMILIES, DEFAULT_PYRAMID } from './assets/notes-data.js';
 import { MASTER_LIBRARY } from './assets/library-data.js';
 
 /* ======= DOM refs ======= */
 const materialsTable      = document.getElementById('materialsTable');
 const materialTemplate    = document.getElementById('materialRowTemplate');
-const noteLibrary         = document.getElementById('noteLibrary');
+const noteLibrary         = document.getElementById('noteLibrary'); // datalist
 const batchWeightInput    = document.getElementById('batchWeight');
 const densityInput        = document.getElementById('density');
 const batchVolumeOutput   = document.getElementById('batchVolume');
@@ -54,18 +54,17 @@ const importFile          = document.getElementById('importFile');         // he
 const importRecipeBtn     = document.getElementById('importRecipeBtn');    // in scheda materiali
 const importRecipeInput   = document.getElementById('importRecipeInput');  // in scheda materiali
 
+// CTA richiesta note (metti questi elementi in fondo pagina)
 const requestNotesCta      = document.getElementById('requestNotesCta');
 const requestNotesForm     = document.getElementById('requestNotesForm');
 const requestNotesInput    = document.getElementById('requestNotesInput');
 const requestNotesSend     = document.getElementById('requestNotesSend');
 const requestNotesFeedback = document.getElementById('requestNotesFeedback');
 
-
 /* ======= Costanti & stato ======= */
 const DROPS_PER_ML       = 20;
 const STORAGE_KEY        = 'parfum-formulator__formulas';
 const THEME_STORAGE_KEY  = 'parfum-formulator__theme';
-
 const DEFAULT_LEVELS     = DEFAULT_PYRAMID;
 
 const themeMediaQuery =
@@ -154,39 +153,37 @@ function initTheme() {
     applyTheme(nextTheme);
   });
   themeMediaQuery?.addEventListener('change', (event) => {
-    if (readStoredTheme()) return; // se l'utente ha scelto manualmente non sovrascrivo
+    if (readStoredTheme()) return;
     applyTheme(event.matches ? 'dark' : 'light');
   });
 }
 
-// === Unico catalogo: costruito da MASTER_LIBRARY ===
+/* ======= Unico catalogo (MASTER_LIBRARY) ======= */
 function buildNoteIndexFromMaster(master) {
-  const index = new Map();   // key normalizzata -> entry { name, families, pyramid, group, aliases? }
+  const index = new Map();   // chiave normalizzata -> entry
   const list  = [];
-
   const norm = (s='') => s.toString().trim().toLowerCase();
 
   master.forEach((raw) => {
     if (!raw || !raw.name) return;
-    const key = norm(raw.name);
+    const key      = norm(raw.name);
     const families = Array.isArray(raw.families) ? raw.families.slice() : [];
     const pyramid  = Array.isArray(raw.pyramid)  ? raw.pyramid.slice()  : [];
     const group    = raw.group || '—';
-    const aliases  = Array.isArray(raw.aliases)  ? raw.aliases.slice()  : []; // opzionale
+    const aliases  = Array.isArray(raw.aliases)  ? raw.aliases.slice()  : [];
 
     if (!index.has(key)) {
       const entry = { name: raw.name, families, pyramid, group, aliases };
       index.set(key, entry);
       list.push(entry);
     } else {
-      // merge eventuali duplicati
       const e = index.get(key);
       families.forEach(f => { if (!e.families.includes(f)) e.families.push(f); });
       pyramid.forEach(p  => { if (!e.pyramid.includes(p))  e.pyramid.push(p);  });
       aliases.forEach(a  => { if (!e.aliases.includes(a))  e.aliases.push(a);  });
     }
 
-    // indicizza anche gli alias (se presenti)
+    // indicizza anche alias → puntano alla stessa entry
     aliases.forEach(a => {
       const ak = norm(a);
       if (!index.has(ak)) index.set(ak, index.get(key));
@@ -196,22 +193,13 @@ function buildNoteIndexFromMaster(master) {
   list.sort((a, b) => a.name.localeCompare(b.name, 'it'));
   return { index, list };
 }
-
-// costruisco l’indice UNA VOLTA
 const { index: NOTE_INDEX, list: NOTE_LIBRARY } = buildNoteIndexFromMaster(MASTER_LIBRARY);
 
+/* ======= Batch prefs ======= */
+function getBatchWeight() { return parseNumber(batchWeightInput.value); }
+function getDensity() { const d = parseNumber(densityInput.value); return d > 0 ? d : 1; }
 
-/* ======= Preferenze batch ======= */
-function getBatchWeight() {
-  return parseNumber(batchWeightInput.value);
-}
-function getDensity() {
-  const density = parseNumber(densityInput.value);
-  return density > 0 ? density : 1;
-}
-
-/* ======= Heuristics per note “sconosciute” ======= */
-/* Prova a inferire famiglia/piramide da parole chiave e Master Library */
+/* ======= Heuristics leggere ======= */
 const FAMILY_KEYWORDS = [
   { kw: ['citrus','bergamot','lemon','lime','orange','mandarin','grapefruit','neroli','petitgrain','yuzu'], family: 'Agrumata', pyramid: ['Testa'] },
   { kw: ['lavender','aromatic','rosemary','sage','basil','thyme'], family: 'Aromatica', pyramid: ['Testa','Cuore'] },
@@ -222,7 +210,6 @@ const FAMILY_KEYWORDS = [
   { kw: ['green','galbanum','leaf','herbal','bamboo'], family: 'Verde', pyramid: ['Testa','Cuore'] },
   { kw: ['spice','pepper','cardamom','cinnamon','clove','nutmeg','ginger'], family: 'Speziata', pyramid: ['Testa','Cuore'] },
 ];
-
 function guessProfileFromText(name) {
   const n = normaliseName(name);
   for (const rule of FAMILY_KEYWORDS) {
@@ -233,15 +220,16 @@ function guessProfileFromText(name) {
   return null;
 }
 
+/* ======= Profilo nota ======= */
 function getMaterialProfile(noteName) {
   if (!noteName) return null;
   const normalised = normaliseName(noteName);
 
-  // 1) Catalogo noto
+  // 1) indice diretto (comprende alias)
   const direct = NOTE_INDEX.get(normalised);
   if (direct) return direct;
 
-  // 2) Master library match
+  // 2) match esatto su MASTER_LIBRARY
   const libHit = MASTER_LIBRARY.find(it => normaliseName(it.name) === normalised);
   if (libHit) {
     return {
@@ -250,26 +238,11 @@ function getMaterialProfile(noteName) {
       pyramid:  Array.isArray(libHit.pyramid)  && libHit.pyramid.length  ? libHit.pyramid  : ['Cuore']
     };
   }
-  /* === UNMAPPED (note non in libreria) === */
-function isUnmappedNote(note) {
-  if (!note) return false;
-  const prof = getMaterialProfile(note);
-  return !prof || !prof.families || !prof.families.length || prof.families[0] === 'Custom';
-}
 
-function applyUnmappedStyle(rowEl, note) {
-  const unmapped = isUnmappedNote(note);
-  rowEl.classList.toggle('is-unmapped', unmapped);
-  const input = rowEl.querySelector('.note-input');
-  if (input) {
-    input.setAttribute('aria-invalid', unmapped ? 'true' : 'false');
-    input.title = unmapped ? 'Nota non presente a catalogo (verrà stimata)' : '';
-  }
-}
-
-
-  // 3) Fuzzy: contiene / alias semplici
-  const containsHit = MASTER_LIBRARY.find(it => normaliseName(it.name).includes(normalised) || normaliseName(noteName).includes(normaliseName(it.name)));
+  // 3) fuzzy contains (semplice)
+  const containsHit = MASTER_LIBRARY.find(it =>
+    normaliseName(it.name).includes(normalised) || normalised.includes(normaliseName(it.name))
+  );
   if (containsHit) {
     return {
       name: containsHit.name,
@@ -278,21 +251,20 @@ function applyUnmappedStyle(rowEl, note) {
     };
   }
 
-  // 4) Heuristic fallback
+  // 4) heuristics
   const heur = guessProfileFromText(noteName);
   if (heur) return { name: noteName, ...heur };
 
-  // 5) Default totale
+  // default
   return { name: noteName, families: ['Custom'], pyramid: ['Cuore'] };
 }
+
 /* === UNMAPPED (note non in libreria) === */
 function isUnmappedNote(note) {
   if (!note) return false;
   const prof = getMaterialProfile(note);
-  // Considero "unmapped" quando il profilo non esiste o è marcato Custom
   return !prof || !prof.families || !prof.families.length || prof.families[0] === 'Custom';
 }
-
 function applyUnmappedStyle(rowEl, note) {
   const unmapped = isUnmappedNote(note);
   rowEl.classList.toggle('is-unmapped', unmapped);
@@ -346,9 +318,7 @@ function recalcMaterial(material, source, value) {
 }
 
 /* ======= UI righe materiali ======= */
-function getMaterial(id) {
-  return state.materials.find((item) => item.id === id);
-}
+function getMaterial(id) { return state.materials.find((item) => item.id === id); }
 
 function createMaterialRow(material) {
   const clone = materialTemplate.content.firstElementChild.cloneNode(true);
@@ -362,12 +332,9 @@ function createMaterialRow(material) {
   const dilutionInput = clone.querySelector('.dilution-input');
   const removeBtn     = clone.querySelector('.remove-btn');
 
-  applyUnmappedStyle(clone, material.note);
-
   noteInput.addEventListener('input', (e) => {
     if (syncing) return;
     updateMaterial(material.id, { note: e.target.value });
-    applyUnmappedStyle(clone, event.target.value);
   });
   gramsInput.addEventListener('input', (e) => {
     if (syncing) return;
@@ -415,7 +382,9 @@ function syncMaterialRow(id) {
   if (document.activeElement !== percentInput)  percentInput.value  = material.percent ? material.percent.toFixed(2): '';
   if (document.activeElement !== dilutionInput) dilutionInput.value = material.dilution ?? 100;
 
+  // evidenziazione unmapped
   applyUnmappedStyle(row, material.note);
+
   syncing = false;
 }
 
@@ -464,7 +433,7 @@ function updateBatchOutputs() {
   updateInsights();
 }
 
-/* ======= Insights (piramide, family, punteggio) ======= */
+/* ======= Insights ======= */
 function computeInsights() {
   const batchWeight = getBatchWeight();
   const totalWeight = state.materials.reduce((sum, item) => sum + (item.grams || 0), 0);
@@ -474,7 +443,6 @@ function computeInsights() {
 
   state.materials.forEach((material) => {
     if (!material.note || material.grams <= 0) return;
-
     const profile = getMaterialProfile(material.note);
     const levels  = profile?.pyramid?.length ? profile.pyramid : ['Cuore'];
     const fams    = profile?.families?.length ? profile.families : ['Custom'];
@@ -485,8 +453,7 @@ function computeInsights() {
     });
 
     fams.forEach((family) => {
-      const current = familyWeights.get(family) || 0;
-      familyWeights.set(family, current + material.grams);
+      familyWeights.set(family, (familyWeights.get(family) || 0) + material.grams);
     });
   });
 
@@ -508,28 +475,19 @@ function computeInsights() {
   const sortedFamilies = [...familyWeights.entries()].sort((a, b) => b[1] - a[1]);
   const dominantFamily = sortedFamilies[0]?.[0] ?? null;
 
-  // punteggio bilanciamento (meno penalizzante per "Custom")
+  // punteggio base (bilanciamento piramide)
   const values = pyramidData.map((pd) => (totalWeight ? pd.weight / totalWeight : 0));
   const spread = values.length ? Math.max(...values) - Math.min(...values) : 0;
   let balanceScore = totalWeight ? Math.max(0, 100 - spread * 100) : 0;
 
-  // riduci penalità se molte note non erano in catalogo ma mappate con heuristic
-  const unknownCount = state.materials.filter(m => {
-    const prof = NOTE_INDEX.get(normaliseName(m.note));
-    return !prof;
-  }).length;
-  if (unknownCount >= 3) {
-    balanceScore = Math.min(100, balanceScore + 8); // micro boost anti-penalità
-  }
+  // riduci penalità se molte note sono “stimate” (non presenti)
+  const unknownCount = state.materials.filter(m => isUnmappedNote(m.note)).length;
+  if (unknownCount >= 3) balanceScore = Math.min(100, balanceScore + 8);
 
   const rating = totalWeight ? (balanceScore / 20).toFixed(1) : '-';
 
   const suggestions = buildSuggestions({
-    totalWeight,
-    pyramidData,
-    dominantFamily,
-    sortedFamilies,
-    batchWeight
+    totalWeight, pyramidData, dominantFamily, sortedFamilies, batchWeight
   });
 
   return {
@@ -554,11 +512,8 @@ function buildSuggestions({ totalWeight, pyramidData, dominantFamily, sortedFami
     if (percentage < 15) suggestions.push(`Valuta di rafforzare la sezione di ${level.toLowerCase()} oltre il 15%.`);
   });
 
-  if (!dominantFamily) {
-    suggestions.push('Seleziona note dal catalogo per ottenere la famiglia olfattiva suggerita.');
-  } else {
-    suggestions.push(`La famiglia ${dominantFamily} è dominante: mantienila oppure integra famiglie complementari.`);
-  }
+  if (!dominantFamily) suggestions.push('Seleziona note dal catalogo per ottenere la famiglia olfattiva suggerita.');
+  else suggestions.push(`La famiglia ${dominantFamily} è dominante: mantienila oppure integra famiglie complementari.`);
 
   if (sortedFamilies.length < 2) suggestions.push('Integra una seconda famiglia per ampliare la complessità.');
 
@@ -569,14 +524,14 @@ function buildSuggestions({ totalWeight, pyramidData, dominantFamily, sortedFami
   if (topLevel && topLevel.percentage > 40) suggestions.push('Riduci leggermente le note di testa per evitare un inizio troppo volatile.');
 
   const concentratePercent = batchWeight ? (totalWeight / batchWeight) * 100 : 0;
-  if (concentratePercent < 10)      suggestions.push('Il concentrato totale è basso: valuta di aumentare le materie prime o ridurre il solvente.');
+  if (concentratePercent < 10) suggestions.push('Il concentrato totale è basso: valuta di aumentare le materie prime o ridurre il solvente.');
   else if (concentratePercent > 30) suggestions.push('Il concentrato supera il 30%: verifica la compatibilità con la tipologia scelta.');
 
   return [...new Set(suggestions)];
 }
 
 function updateInsights() {
-  const { pyramidData, dominantFamily, rating, score, suggestions, totalWeight } = computeInsights();
+  const { pyramidData, dominantFamily, rating, suggestions, totalWeight } = computeInsights();
 
   pyramidList.innerHTML = '';
   pyramidData.forEach(({ level, list, percentage }) => {
@@ -595,7 +550,7 @@ function updateInsights() {
   familyBadge.textContent = dominantFamily ?? '-';
 
   if (totalWeight) {
-    const value10 = Math.round((rating / 5) * 10); // scala 1..10
+    const value10 = Math.round((Number(rating) / 5) * 10);
     window.setBalanceScore?.(value10);
   } else {
     scoreValue.textContent = '-';
@@ -638,10 +593,7 @@ function resetFormula() {
 }
 
 function saveFormula() {
-  if (!state.materials.length) {
-    alert('Aggiungi almeno una nota alla formula.');
-    return;
-  }
+  if (!state.materials.length) return alert('Aggiungi almeno una nota alla formula.');
   const formula = collectFormula();
   const index   = state.formulas.findIndex((f) => f.id === formula.id);
   if (index > -1) state.formulas[index] = formula;
@@ -651,9 +603,8 @@ function saveFormula() {
   state.editingId = formula.id;
 }
 
-function persistLibrary() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.formulas)); } catch {}
-}
+function persistLibrary() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.formulas)); } catch {} }
+
 function loadLibrary() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return;
@@ -765,7 +716,6 @@ function exportFormula() {
   const blob = new Blob([JSON.stringify(formula, null, 2)], { type: 'application/json' });
   downloadFile(blob, buildSafeFileName(formula.name, 'json'));
 }
-
 function computeMaterialTotals(materials) {
   return materials.reduce((acc, item) => {
     const grams   = Number(item.grams)   || 0;
@@ -780,7 +730,6 @@ function computeMaterialTotals(materials) {
     };
   }, { grams: 0, ml: 0, drops: 0, percent: 0 });
 }
-
 function exportFormulaExcel() {
   hydrateStateFromForm();
   if (!state.materials.length) return alert('Nessuna formula da esportare.');
@@ -789,12 +738,12 @@ function exportFormulaExcel() {
   const generatedAt = new Date().toLocaleString('it-IT');
 
   const metadataRows = [
-    ['Nome formula', formula.name],
-    ['Tipologia',    formula.type],
-    ['Lotto (g)',    formatDecimal(formula.batchWeight, 2)],
-    ['Densità (g/ml)', formatDecimal(formula.density, 3)],
-    ['Note inserite', `${formula.materials.length}`],
-    ['Generato il',  generatedAt]
+    ['Nome formula',    formula.name],
+    ['Tipologia',       formula.type],
+    ['Lotto (g)',       formatDecimal(formula.batchWeight, 2)],
+    ['Densità (g/ml)',  formatDecimal(formula.density, 3)],
+    ['Note inserite',   `${formula.materials.length}`],
+    ['Generato il',     generatedAt]
   ];
   const metadataTable = metadataRows.map(([label, value]) =>
     `<tr><th style="text-align:left;background:#eef1ff;padding:8px 12px;">${escapeHtml(label)}</th><td style="padding:8px 12px;">${escapeHtml(value)}</td></tr>`
@@ -850,13 +799,11 @@ function exportFormulaExcel() {
   const blob = new Blob([htmlDocument], { type: 'application/vnd.ms-excel' });
   downloadFile(blob, buildSafeFileName(formula.name, 'xls'));
 }
-
 function sanitizePdfText(value = '') {
   return value.toString().normalize('NFD').replace(/\p{Diacritic}/gu, '')
     .replace(/[\r\n]+/g, ' ').replace(/[^\x20-\x7E]/g, '')
     .replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
 }
-
 function generatePdfBlob(lines) {
   const encoder = new TextEncoder();
   const header  = '%PDF-1.3\n';
@@ -915,7 +862,6 @@ function generatePdfBlob(lines) {
 
   return new Blob([buffer], { type: 'application/pdf' });
 }
-
 function exportFormulaPdf() {
   hydrateStateFromForm();
   if (!state.materials.length) return alert('Nessuna formula da esportare.');
@@ -992,10 +938,8 @@ function importFormulaObject(obj) {
   updateBatchOutputs();
   updateInsights();
 
-  // porta l’utente allo step delle materie prime (se usi router hash)
   if (typeof location !== 'undefined') location.hash = '#/step/2';
 }
-
 function handleImportFile(file) {
   if (!file) return;
   const reader = new FileReader();
@@ -1025,9 +969,7 @@ function openCatalog() {
   renderCatalog();
   setTimeout(() => catalogSearch?.focus(), 50);
 }
-function closeCatalog() {
-  catalogModal?.setAttribute('aria-hidden', 'true');
-}
+function closeCatalog() { catalogModal?.setAttribute('aria-hidden', 'true'); }
 function renderCatalog() {
   if (!catalogList) return;
   const q   = (catalogSearch?.value || '').trim().toLowerCase();
@@ -1084,6 +1026,19 @@ function renderCatalog() {
   catalogList.appendChild(frag);
 }
 
+/* ======= Datalist autocomplete ======= */
+function loadNoteLibrary() {
+  if (!noteLibrary) return;
+  noteLibrary.innerHTML = '';
+  const fragment = document.createDocumentFragment();
+  NOTE_LIBRARY.forEach((note) => {
+    const option = document.createElement('option');
+    option.value = note.name;
+    fragment.appendChild(option);
+  });
+  noteLibrary.appendChild(fragment);
+}
+
 /* ======= Hydrate dallo stato UI ======= */
 function hydrateStateFromForm() {
   state.materials = Array.from(materialsTable.querySelectorAll('.material-row')).map((row) => {
@@ -1100,10 +1055,37 @@ function hydrateStateFromForm() {
   });
 }
 
-/* ======= Init / Eventi ======= */
-function addInitialRows() {
-  if (!state.materials.length) addMaterial();
+/* ======= CTA "Non trovi qualche nota?" ======= */
+function initRequestNotesCta() {
+  // Mostra la form quando clicchi la CTA piccola
+  requestNotesCta?.addEventListener('click', () => {
+    requestNotesForm?.classList.toggle('is-open');
+    requestNotesInput?.focus();
+  });
+
+  // Invia (qui salvi in localStorage; in futuro puoi collegare un backend)
+  requestNotesSend?.addEventListener('click', () => {
+    const txt = (requestNotesInput?.value || '').trim();
+    if (!txt) {
+      requestNotesFeedback && (requestNotesFeedback.textContent = 'Scrivi almeno una nota.');
+      return;
+    }
+    try {
+      const key = 'parfum-formulator__requested_notes';
+      const prev = JSON.parse(localStorage.getItem(key) || '[]');
+      prev.push({ text: txt, createdAt: new Date().toISOString() });
+      localStorage.setItem(key, JSON.stringify(prev));
+      requestNotesInput.value = '';
+      requestNotesFeedback && (requestNotesFeedback.textContent = 'Grazie! Le valuteremo per la prossima patch.');
+      setTimeout(() => { requestNotesFeedback.textContent = ''; requestNotesForm?.classList.remove('is-open'); }, 2000);
+    } catch {
+      requestNotesFeedback && (requestNotesFeedback.textContent = 'Non sono riuscito a salvare la richiesta.');
+    }
+  });
 }
+
+/* ======= Init / Eventi ======= */
+function addInitialRows() { if (!state.materials.length) addMaterial(); }
 
 function initEvents() {
   // Material table
@@ -1136,42 +1118,6 @@ function initEvents() {
   importFile?.addEventListener('change', (e) => {
     handleImportFile(e.target.files?.[0]);
     e.target.value = '';
-
-    // === CTA mancano note ===
-requestNotesCta?.addEventListener('click', () => {
-  const isHidden = requestNotesForm?.hasAttribute('hidden');
-  if (isHidden) {
-    requestNotesForm?.removeAttribute('hidden');
-    requestNotesInput?.focus();
-  } else {
-    requestNotesForm?.setAttribute('hidden', '');
-  }
-});
-
-requestNotesSend?.addEventListener('click', () => {
-  const text = (requestNotesInput?.value || '').trim();
-  if (!text) {
-    requestNotesFeedback.textContent = 'Scrivi almeno una nota.';
-    return;
-  }
-
-  // 1) salvo localmente una coda (ti torna utile per inviarla più avanti)
-  try {
-    const key = 'parfum-formulator__missingNotes';
-    const prev = JSON.parse(localStorage.getItem(key) || '[]');
-    prev.push({ text, at: new Date().toISOString() });
-    localStorage.setItem(key, JSON.stringify(prev));
-  } catch {}
-
-  // 2) apro un'email precompilata (se vuoi cambiare indirizzo, fallo qui)
-  const mailto = `mailto:info@tua-mail.it?subject=${encodeURIComponent('Richiesta nuove note')}&body=${encodeURIComponent(text)}`;
-  window.location.href = mailto;
-
-  // 3) feedback UI
-  requestNotesFeedback.textContent = 'Grazie! Aprirà il tuo client email con il testo precompilato.';
-  requestNotesInput.value = '';
-});
-
   });
 
   // Import (scheda materiali)
@@ -1195,28 +1141,19 @@ requestNotesSend?.addEventListener('click', () => {
       if (file && /\.json$/i.test(file.name)) handleImportFile(file);
     });
   }
+
+  // CTA richiesta note
+  initRequestNotesCta();
 }
 
 function init() {
-  loadNoteLibrary();
+  loadNoteLibrary();  // autocomplete dal catalogo unico
   loadLibrary();
   renderLibrary();
   addInitialRows();
   initEvents();
   updateBatchOutputs();
   updateInsights();
-}
-
-function loadNoteLibrary() {
-  if (!noteLibrary) return;
-  noteLibrary.innerHTML = '';
-  const fragment = document.createDocumentFragment();
-  NOTE_LIBRARY.forEach((note) => {
-    const option = document.createElement('option');
-    option.value = note.name;
-    fragment.appendChild(option);
-  });
-  noteLibrary.appendChild(fragment);
 }
 
 /* ======= Bootstrap ======= */
@@ -1247,7 +1184,7 @@ init();
   };
 })();
 
-/* ======= Wizard bridge (per router in index.html) ======= */
+/* ======= Wizard bridge (router) ======= */
 window.__wizardApi = {
   hydrate: hydrateStateFromForm,
   updateBatch: updateBatchOutputs,
