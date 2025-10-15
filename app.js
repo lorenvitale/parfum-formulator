@@ -9,7 +9,8 @@
  * - Wizard bridge per router
  * ========================================================================== */
 
-import { NOTES_DATA, OLFACTIVE_FAMILIES, DEFAULT_PYRAMID } from './assets/notes-data.js';
+// OLFACTIVE_FAMILIES e DEFAULT_PYRAMID restano in notes-data.js, ma NON useremo più NOTES_DATA
+import { OLFACTIVE_FAMILIES, DEFAULT_PYRAMID } from './assets/notes-data.js';
 import { MASTER_LIBRARY } from './assets/library-data.js';
 
 /* ======= DOM refs ======= */
@@ -159,28 +160,47 @@ function initTheme() {
   });
 }
 
-/* ======= Data structures ======= */
-function buildNoteCatalog(notes) {
-  const index = new Map();
-  const list = [];
-  notes.forEach((note) => {
-    if (!note || !note.name) return;
-    const key = normaliseName(note.name);
-    const families = Array.isArray(note.families) ? note.families : [];
-    const pyramid  = Array.isArray(note.pyramid)  ? note.pyramid  : [];
-    if (index.has(key)) {
-      const existing = index.get(key);
-      families.forEach((f) => { if (!existing.families.includes(f)) existing.families.push(f); });
-      pyramid.forEach((p)  => { if (!existing.pyramid.includes(p))  existing.pyramid.push(p);  });
-    } else {
-      const entry = { name: note.name, families: [...families], pyramid: [...pyramid] };
+// === Unico catalogo: costruito da MASTER_LIBRARY ===
+function buildNoteIndexFromMaster(master) {
+  const index = new Map();   // key normalizzata -> entry { name, families, pyramid, group, aliases? }
+  const list  = [];
+
+  const norm = (s='') => s.toString().trim().toLowerCase();
+
+  master.forEach((raw) => {
+    if (!raw || !raw.name) return;
+    const key = norm(raw.name);
+    const families = Array.isArray(raw.families) ? raw.families.slice() : [];
+    const pyramid  = Array.isArray(raw.pyramid)  ? raw.pyramid.slice()  : [];
+    const group    = raw.group || '—';
+    const aliases  = Array.isArray(raw.aliases)  ? raw.aliases.slice()  : []; // opzionale
+
+    if (!index.has(key)) {
+      const entry = { name: raw.name, families, pyramid, group, aliases };
       index.set(key, entry);
       list.push(entry);
+    } else {
+      // merge eventuali duplicati
+      const e = index.get(key);
+      families.forEach(f => { if (!e.families.includes(f)) e.families.push(f); });
+      pyramid.forEach(p  => { if (!e.pyramid.includes(p))  e.pyramid.push(p);  });
+      aliases.forEach(a  => { if (!e.aliases.includes(a))  e.aliases.push(a);  });
     }
+
+    // indicizza anche gli alias (se presenti)
+    aliases.forEach(a => {
+      const ak = norm(a);
+      if (!index.has(ak)) index.set(ak, index.get(key));
+    });
   });
+
   list.sort((a, b) => a.name.localeCompare(b.name, 'it'));
   return { index, list };
 }
+
+// costruisco l’indice UNA VOLTA
+const { index: NOTE_INDEX, list: NOTE_LIBRARY } = buildNoteIndexFromMaster(MASTER_LIBRARY);
+
 
 /* ======= Preferenze batch ======= */
 function getBatchWeight() {
