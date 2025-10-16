@@ -32,6 +32,11 @@ export const MASTER_LIBRARY = [
   { name: "Transcutol (DEGEE)", group: "Solvente", families: ["Neutra"], pyramid: [], use: ["penetrazione/trascinamento","co-solvente"] },
   { name: "PEG-40 Hydrogenated Castor Oil", group: "Solubilizzante", families: ["Neutra"], pyramid: [], use: ["solubilizzante acqua/alcol","tensioattivo non ionico"] },
   { name: "Polysorbate-20 (Tween 20)", group: "Solubilizzante", families: ["Neutra"], pyramid: [], use: ["solubilizzante acqua/alcol","tensioattivo non ionico"] },
+  { name: "EDP Solution", group: "Soluzione base", families: ["Neutra", "Tecnica"], pyramid: [], use: ["base EDP", "veicolo pronto", "uso professionale"], notes: "Miscela bilanciata di Etanolo 96°, Trietil Citrato e DPG. Ottimizzata per profumi concentrati (Eau de Parfum 15–20%). Evaporazione pulita, non altera la piramide." },
+  { name: "EDT Solution", group: "Soluzione base", families: ["Neutra", "Tecnica"], pyramid: [], use: ["base EDT", "veicolo leggero"], notes: "Blend ad alta percentuale etanolica (90–95%) con frazione di TEC e DPG per maggiore brillantezza delle note di testa." },
+  { name: "Extrait Solution", group: "Soluzione base", families: ["Neutra", "Tecnica"], pyramid: [], use: ["base Extrait", "fissante"], notes: "Miscela a bassa volatilità con alta quota di DPG e IPM. Ideale per profumi concentrati o oli profumati." },
+  { name: "Oil Solution", group: "Soluzione base", families: ["Neutra", "Tecnica"], pyramid: [], use: ["base oleosa", "olio profumato"], notes: "Blend di MCT, Jojoba e IPM. Evaporazione lenta, texture morbida, eccellente stabilità." },
+  { name: "Home Fragrance Solution", group: "Soluzione base", families: ["Neutra", "Tecnica"], pyramid: [], use: ["base ambiente", "diffusori", "spray casa"], notes: "Combinazione di Etanolo, DPG e TEC ottimizzata per diffusori e spray ambiente. Bilancia diffusione e persistenza." },
 
   // Esempio aggiuntivo di ingrediente per continuità
   { name: "Benzoino Italiano (Styrax officinalis)", group: "Balsamica", families: ["Balsamica","Vanigliata","Resinosa"], pyramid: ["Base"] }
