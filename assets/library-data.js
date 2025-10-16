@@ -241,6 +241,59 @@ export const MASTER_LIBRARY = [
   { name: "Iso Methyl Ionone", group: "Fiorita", families: ["Fiorita", "Ambrata", "Legnosa"], pyramid: ["Cuore"] },
   { name: "Dihydro Ionone", group: "Fiorita", families: ["Fiorita", "Verde", "Legnosa"], pyramid: ["Cuore"] },
   { name: "Vetyl Ionone", group: "Legnosa", families: ["Legnosa", "Fiorita", "Ambrata"], pyramid: ["Cuore"] }
+,
+  // ——— Suggerimenti di nuove note da aggiungere ———
+  { name: "Galbano Resinoide", group: "Resina", families: ["Verde","Resinosa","Amara"], pyramid: ["Testa","Cuore"] },
+  { name: "Elemi", group: "Resina", families: ["Balsamica","Agrumata","Peppery"], pyramid: ["Testa"] },
+  { name: "Copaiba Balsam", group: "Resina", families: ["Balsamica","Ambrata"], pyramid: ["Fondo"] },
+  { name: "Balsamo del Perù", group: "Resina", families: ["Balsamica","Dolce","Vanigliata"], pyramid: ["Fondo"] },
+  { name: "Betulla Catrame (Birch Tar)", group: "Resina", families: ["Affumicata","Cuoiata"], pyramid: ["Fondo"] },
+  { name: "Olio di Cade", group: "Resina", families: ["Affumicata","Legnosa"], pyramid: ["Fondo"] },
+  { name: "Guaiaco", group: "Olio essenziale", families: ["Legnosa","Affumicata","Balsamica"], pyramid: ["Cuore","Fondo"] },
+
+  { name: "Menta Crispa", group: "Olio essenziale", families: ["Aromatica","Dolce"], pyramid: ["Testa"] },
+  { name: "Mirto", group: "Olio essenziale", families: ["Aromatica","Verde"], pyramid: ["Testa"] },
+  { name: "Lentisco", group: "Olio essenziale", families: ["Verde","Resinosa"], pyramid: ["Testa","Cuore"] },
+
+  { name: "Geraniolo", group: "Molecola aromatica", families: ["Fiorita","Rosa"], pyramid: ["Cuore"] },
+  { name: "Nerolo", group: "Molecola aromatica", families: ["Fiorita","Agrumata"], pyramid: ["Cuore"] },
+  { name: "Citronellolo", group: "Molecola aromatica", families: ["Fiorita","Verde"], pyramid: ["Cuore"] },
+  { name: "Aurantione (Aurantiol)", group: "Schiff base", families: ["Fiorita","Mielata","Gelsominata"], pyramid: ["Cuore"] },
+  { name: "Florhydral", group: "Sintetico", families: ["Fiorita","Fresca"], pyramid: ["Cuore"] },
+
+  { name: "Gamma Decalattone", group: "Lattone", families: ["Fruttata","Pesca","Lattata"], pyramid: ["Cuore"] },
+  { name: "Gamma Undecalattone", group: "Lattone", families: ["Fruttata","Albicocca","Lattata"], pyramid: ["Cuore"] },
+  { name: "Delta Decalattone", group: "Lattone", families: ["Lattata","Cremosa"], pyramid: ["Cuore","Fondo"] },
+
+  { name: "Cassis Base", group: "Accordo", families: ["Fruttata","Verde","Zolfata"], pyramid: ["Testa"] },
+  { name: "Uva Ribes Nero Base", group: "Accordo", families: ["Fruttata","Verde"], pyramid: ["Testa"] },
+  { name: "Foglia di Pomodoro", group: "Accordo", families: ["Verde","Erbacea"], pyramid: ["Testa"] },
+
+  { name: "Aquozone", group: "Sintetico", families: ["Marina","Ozonic"], pyramid: ["Testa"] },
+  { name: "Melonal", group: "Sintetico", families: ["Marina","Melone"], pyramid: ["Testa"] },
+
+  { name: "Amber Xtreme", group: "Sintetico", families: ["Ambrata","Legnosa"], pyramid: ["Fondo"] },
+  { name: "Kephalis", group: "Sintetico", families: ["Ambrata","Tabaccata","Legnosa"], pyramid: ["Fondo"] },
+  { name: "Sylvamber", group: "Sintetico", families: ["Legnosa","Ambrata"], pyramid: ["Fondo"] },
+  { name: "Orcanox", group: "Sintetico", families: ["Legnosa","Ambrata"], pyramid: ["Fondo"] },
+  { name: "Georgywood", group: "Sintetico", families: ["Legnosa","Cedrata"], pyramid: ["Cuore","Fondo"] },
+  { name: "Javanol", group: "Sintetico", families: ["Legnosa","Sandalata"], pyramid: ["Fondo"] },
+  { name: "Polysantol", group: "Sintetico", families: ["Legnosa","Sandalata"], pyramid: ["Fondo"] },
+  { name: "Ebanol", group: "Sintetico", families: ["Legnosa","Sandalata","Lattata"], pyramid: ["Fondo"] },
+  { name: "Sandalore", group: "Sintetico", families: ["Legnosa","Sandalata"], pyramid: ["Fondo"] },
+
+  { name: "Safraleine", group: "Sintetico", families: ["Speziata","Cuoiata"], pyramid: ["Cuore","Fondo"] },
+  { name: "Iso E Super CRISP", group: "Sintetico", families: ["Legnosa","Trasparente"], pyramid: ["Cuore","Fondo"] },
+
+  { name: "Castoreo (accordo)", group: "Accordo", families: ["Animalica","Cuoiata"], pyramid: ["Fondo"] },
+  { name: "Skatolo (tracce)", group: "Molecola aromatica", families: ["Animalica","Indolica"], pyramid: ["Fondo"] },
+
+  { name: "Clearwood", group: "Biotech", families: ["Legnosa","Patchouli clean"], pyramid: ["Fondo"] },
+  { name: "Okoumal (dup check)", group: "Sintetico", families: ["Legnosa","Ambrata"], pyramid: ["Fondo"] },
+
+  { name: "Nota Noce Nocciola", group: "Accordo", families: ["Gourmand","Nocciolata"], pyramid: ["Fondo"] },
+  { name: "Sciroppo d'Acero", group: "Accordo", families: ["Gourmand","Dolce"], pyramid: ["Fondo"] },
+  { name: "Popcorn", group: "Accordo", families: ["Gourmand","Tostata"], pyramid: ["Cuore","Fondo"] }
 
 ];
 
