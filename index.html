@@ -111,92 +111,98 @@
         </p>
       </section>
 
-      <!-- 🔹 SEZIONE MATERIE PRIME -->
-      <section class="card step" data-step="2" id="materialsSection">
-        <div class="section-header">
-          <h2>Materie Prime</h2>
-          <div class="section-actions">
-            <button id="browseCatalogBtn" type="button" class="ghost-btn">Sfoglia catalogo</button>
-            <button id="addMaterialBtn" type="button">Aggiungi nota</button>
-            <button id="clearMaterialsBtn" class="ghost-btn" type="button">Svuota</button>
-          </div>
+     <!-- 🔹 SEZIONE MATERIE PRIME -->
+<section class="card step" data-step="2" id="materialsSection">
+  <div class="section-header">
+    <h2>Materie Prime</h2>
+    <div class="section-actions">
+      <button id="browseCatalogBtn" type="button" class="ghost-btn">Sfoglia catalogo</button>
+      <button id="addMaterialBtn" type="button">Aggiungi nota</button>
+      <button id="clearMaterialsBtn" class="ghost-btn" type="button">Svuota</button>
+    </div>
+  </div>
+
+  <div class="materials-table" id="materialsTable"></div>
+  <p class="microcopy">
+    Inserisci le note aromatiche in grammi. Le conversioni in ml, gocce e percentuali
+    sono calcolate automaticamente rispetto al lotto.
+  </p>
+
+  <!-- === BATCH MIXER SECTION (INSIDE STEP 2) === -->
+  <section id="batch-mixer" class="bm-wrap">
+    <header class="bm-head">
+      <h2>Batch Mixer</h2>
+      <p id="bm-range-hint" class="bm-hint"></p>
+    </header>
+
+    <div class="bm-grid">
+      <div class="bm-field">
+        <label for="bm-batch">Batch (mL)</label>
+        <input id="bm-batch" type="number" min="1" step="0.1" value="10" />
+      </div>
+
+      <div class="bm-field">
+        <label>Tipologia</label>
+        <div id="bm-types" class="bm-types">
+          <button data-type="EDC">EDC</button>
+          <button data-type="EDT">EDT</button>
+          <button data-type="EDP" class="active">EDP</button>
+          <button data-type="Extrait">Extrait</button>
         </div>
-        <div class="materials-table" id="materialsTable"></div>
-        <p class="microcopy">
-          Inserisci le note aromatiche in grammi. Le conversioni in ml, gocce e percentuali
-          sono calcolate automaticamente rispetto al lotto.
-        </p>
-      </section>
-       <section id="batch-mixer" class="bm-wrap">
-  <header class="bm-head">
-    <h2>Batch Mixer</h2>
-    <p id="bm-range-hint" class="bm-hint"></p>
-  </header>
-
-  <div class="bm-grid">
-    <div class="bm-field">
-      <label for="bm-batch">Batch (mL)</label>
-      <input id="bm-batch" type="number" min="1" step="0.1" value="10" />
-    </div>
-
-    <div class="bm-field">
-      <label>Tipologia</label>
-      <div id="bm-types" class="bm-types">
-        <button data-type="EDC">EDC</button>
-        <button data-type="EDT">EDT</button>
-        <button data-type="EDP" class="active">EDP</button>
-        <button data-type="Extrait">Extrait</button>
+        <small class="bm-hint">Range consigliato visibile sulla barra</small>
       </div>
-      <small class="bm-hint">Range consigliato visibile sulla barra</small>
-    </div>
 
-    <div class="bm-meter">
-      <div class="bm-line">
-        <div id="bm-bar-fill" class="bm-bar"></div>
-      </div>
-      <div class="bm-meter-row">
-        <span>Concentrato</span>
-        <span id="bm-conc">0.00 mL (0%)</span>
-      </div>
-      <div class="bm-meter-row small">
-        <span>Totale</span>
-        <span id="bm-total">0.00 / 10 mL</span>
+      <div class="bm-meter">
+        <div class="bm-line">
+          <div id="bm-bar-fill" class="bm-bar"></div>
+        </div>
+        <div class="bm-meter-row">
+          <span>Concentrato</span>
+          <span id="bm-conc">0.00 mL (0%)</span>
+        </div>
+        <div class="bm-meter-row small">
+          <span>Totale</span>
+          <span id="bm-total">0.00 / 10 mL</span>
+        </div>
       </div>
     </div>
-  </div>
 
-  <hr class="bm-sep" />
+    <hr class="bm-sep" />
 
-  <div class="bm-add">
-    <div class="bm-add-left">
-      <label for="bm-note-name">Aggiungi nota</label>
-      <input id="bm-note-name" placeholder="Es. Iso E Super, Ambroxan, Bergamotto…" />
+    <div class="bm-add">
+      <div class="bm-add-left">
+        <label for="bm-note-name">Aggiungi nota</label>
+        <input id="bm-note-name" placeholder="Es. Iso E Super, Ambroxan, Bergamotto…" />
+      </div>
+      <div class="bm-add-right">
+        <label for="bm-note-ml">mL</label>
+        <input id="bm-note-ml" type="number" step="0.05" min="0" value="0.10" />
+      </div>
+      <button id="bm-add-note" class="bm-btn">Aggiungi</button>
     </div>
-    <div class="bm-add-right">
-      <label for="bm-note-ml">mL</label>
-      <input id="bm-note-ml" type="number" step="0.05" min="0" value="0.10" />
-    </div>
-    <button id="bm-add-note" class="bm-btn">Aggiungi</button>
-  </div>
 
-  <div class="bm-table">
-    <div class="bm-thead">
-      <div>Nome</div><div>Tipo</div><div>mL</div><div>Azioni</div>
+    <div class="bm-table">
+      <div class="bm-thead">
+        <div>Nome</div><div>Tipo</div><div>mL</div><div>Azioni</div>
+      </div>
+      <table>
+        <tbody id="bm-rows"></tbody>
+      </table>
     </div>
-    <table>
-      <tbody id="bm-rows"></tbody>
-    </table>
-  </div>
 
-  <div class="bm-footer">
-    <div>Rimanenti da riempire: <b id="bm-remaining">0.00 mL</b></div>
-    <button id="bm-open-diluent" class="bm-btn bm-pipette">
-      <svg viewBox="0 0 24 24" class="bm-icon"><path d="M14 4l6 6-8 8H6v-6zM4 20h16"/></svg>
-      Aggiungi diluente
-    </button>
-  </div>
-</section>
-      <!-- Modal -->
+    <div class="bm-footer">
+      <div>Rimanenti da riempire: <b id="bm-remaining">0.00 mL</b></div>
+      <button id="bm-open-diluent" class="bm-btn bm-pipette">
+        <svg viewBox="0 0 24 24" class="bm-icon">
+          <path d="M14 4l6 6-8 8H6v-6zM4 20h16"/>
+        </svg>
+        Aggiungi diluente
+      </button>
+    </div>
+  </section>
+  <!-- === /BATCH MIXER SECTION === -->
+
+  <!-- Modal del mixer (sempre dentro lo Step 2) -->
   <div id="bm-modal" class="bm-modal">
     <div id="bm-modal-mask" class="bm-mask"></div>
     <div class="bm-dialog">
@@ -228,7 +234,6 @@
     </div>
   </div>
 </section>
-
 
       <!-- 🔹 STEP 3 — PIRAMIDE OLFATTIVA -->
 <section class="card step" data-step="3" id="pyramidSection">
@@ -555,8 +560,7 @@
 })();
 </script>
 
-    <script type="module" src="app.js"></script>
-    <script>
+       <script>
 (function () {
   const stepsEls = Array.from(document.querySelectorAll('.step'));
   const stepperItems = Array.from(document.querySelectorAll('.stepper-list li'));
@@ -701,7 +705,7 @@
     }
   });
 </script>
-    <script src="app.js"></script>
-<script src="assets/batch-mixer.js"></script>
+     <script type="module" src="app.js"></script>
+   <script src="assets/batch-mixer.js"></script>
   </body>
 </html>
