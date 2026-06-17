@@ -1063,6 +1063,10 @@ function initRequestNotesCta() {
     requestNotesInput?.focus();
   });
 
+  requestNotesInput?.addEventListener('input', () => {
+    if (requestNotesFeedback) requestNotesFeedback.textContent = '';
+  });
+
   // Invia (qui salvi in localStorage; in futuro puoi collegare un backend)
   requestNotesSend?.addEventListener('click', () => {
     const txt = (requestNotesInput?.value || '').trim();

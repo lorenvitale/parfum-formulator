@@ -932,10 +932,14 @@ body[data-theme='dark'] .stepper-actions .ghost-btn{
 
 .missing-notes__form {
   margin-top: 10px;
-  display: flex;
+  display: none;
   gap: 8px;
   align-items: center;
   flex-wrap: wrap;
+}
+
+.missing-notes__form.is-open {
+  display: flex;
 }
 
 #requestNotesInput {
